@@ -692,29 +692,185 @@
 <div id="panel-gd" class="panel">
   <h2>⛷️ Gradient Descent Simulator</h2>
   <p class="subtitle">
-    The ball rolls down the curve <strong>y = (x − 3)²</strong> toward its minimum at x=3.
-    The <em>learning rate</em> controls step size. Too small = slow. Too large = chaos.
+    This is the engine behind all machine learning. Every time a model trains,
+    this is what's happening — thousands of times per second, for every weight.
   </p>
 
+  <!-- WHAT IS IT -->
   <div class="card">
-    <canvas id="gd-canvas" width="820" height="340"></canvas>
+    <h3>What is Gradient Descent?</h3>
+    <p style="font-size:0.88rem;color:#8b949e;line-height:1.8;margin-bottom:16px;">
+      Imagine you are <strong style="color:#e6edf3">blindfolded on a hilly landscape</strong>. You want to find the lowest valley.
+      Your only tool: feel the slope under your feet, then take one step in the downhill direction. Repeat.
+      Eventually you reach the bottom — the minimum.
+    </p>
+    <p style="font-size:0.88rem;color:#8b949e;line-height:1.8;margin-bottom:16px;">
+      In machine learning, the "landscape" is the <strong style="color:#e6edf3">loss curve</strong> —
+      a graph showing how wrong the model is at every possible weight value.
+      Gradient descent finds the weight value where the model is least wrong.
+    </p>
+
+    <!-- Legend: visual → ML meaning -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:0;">
+      <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:14px;">
+        <div style="font-size:0.78rem;color:#8b949e;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">In the simulator</div>
+        <div style="font-size:0.85rem;line-height:2.1;">
+          <span style="color:#58a6ff">🔵 Blue curve</span><br>
+          <span style="color:#ffa657">🟠 Ball</span><br>
+          <span style="color:#e6edf3">x-axis position</span><br>
+          <span style="color:#e6edf3">y-axis height</span><br>
+          <span style="color:#3fb950">⭐ Gold star</span><br>
+          <span style="color:#e6edf3">Step size</span>
+        </div>
+      </div>
+      <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:14px;">
+        <div style="font-size:0.78rem;color:#8b949e;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">What it means in ML</div>
+        <div style="font-size:0.85rem;line-height:2.1;color:#8b949e;">
+          Loss curve <span style="color:#484f58">y = (x−3)²</span><br>
+          Current weight value<br>
+          Weight value being tested<br>
+          How wrong the model is (loss)<br>
+          Optimal weight (loss = 0)<br>
+          Learning rate η
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- THE MATH -->
+  <div class="card">
+    <h3>The One Formula That Drives All of ML</h3>
+    <div style="background:#0d1117;border-radius:8px;padding:20px;text-align:center;margin-bottom:16px;">
+      <div style="font-size:1.3rem;font-family:monospace;font-weight:800;line-height:2.4;">
+        <span style="color:#ffa657">x</span>
+        <span style="color:#8b949e"> = </span>
+        <span style="color:#ffa657">x</span>
+        <span style="color:#8b949e"> − </span>
+        <span style="color:#58a6ff">η</span>
+        <span style="color:#8b949e"> × </span>
+        <span style="color:#d29922">gradient</span>
+      </div>
+      <div style="font-size:0.78rem;color:#484f58;font-family:monospace;">
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        ↑ current weight &nbsp;&nbsp;&nbsp;&nbsp; ↑ learning rate &nbsp;&nbsp;&nbsp; ↑ slope at current position
+      </div>
+    </div>
+    <div style="font-size:0.85rem;color:#8b949e;line-height:1.9;">
+      <strong style="color:#ffa657">x (weight)</strong> — the value we're adjusting. Starts random; converges toward the best value.<br>
+      <strong style="color:#58a6ff">η (learning rate)</strong> — how big each step is. Too small = takes forever. Too large = overshoots and bounces.<br>
+      <strong style="color:#d29922">gradient</strong> — the slope of the curve at the ball's current position.
+        Positive slope → ball is to the right of the valley → subtract → move left.
+        Negative slope → ball is to the left → add → move right.<br>
+      <br>
+      For this simulator, the curve is <code style="color:#8b949e">y = (x−3)²</code>, so:
+      <code style="color:#3fb950">gradient = 2(x−3)</code>.
+      At x=6: gradient = 2(6−3) = <strong style="color:#e6edf3">6</strong>.
+      Step: x = 6 − 0.1 × 6 = <strong style="color:#e6edf3">5.4</strong>. Getting closer to 3.
+    </div>
+  </div>
+
+  <!-- SIMULATOR -->
+  <div class="card">
+    <h3>Live Simulator — Watch the Ball Find the Minimum</h3>
+    <canvas id="gd-canvas" width="820" height="300"></canvas>
+
     <div class="gd-controls">
       <div>
         <label>Learning rate η: <span class="lr-display" id="lr-display">0.10</span></label><br>
-        <input type="range" id="lr-slider" min="0.01" max="1.2" step="0.01" value="0.1"
-               oninput="updateLR()">
+        <input type="range" id="lr-slider" min="0.01" max="1.2" step="0.01" value="0.1" oninput="updateLR()">
       </div>
       <button onclick="gdStep()">⏭ Single Step</button>
       <button onclick="gdAuto()" id="auto-btn">▶ Auto</button>
       <button class="secondary" onclick="gdReset()">↺ Reset</button>
     </div>
-    <div style="display:flex;gap:16px;flex-wrap:wrap;">
-      <div class="gd-stat">Position x: <span id="stat-x">6.00</span></div>
-      <div class="gd-stat">Loss y: <span id="stat-y">9.00</span></div>
-      <div class="gd-stat">Step #: <span id="stat-step">0</span></div>
-      <div class="gd-stat">Gradient: <span id="stat-grad">6.00</span></div>
+
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
+      <div class="gd-stat">
+        Weight x: <span id="stat-x">6.00</span>
+        <div style="font-size:0.7rem;color:#484f58;">current weight value</div>
+      </div>
+      <div class="gd-stat">
+        Loss y: <span id="stat-y">9.00</span>
+        <div style="font-size:0.7rem;color:#484f58;">how wrong the model is</div>
+      </div>
+      <div class="gd-stat">
+        Gradient: <span id="stat-grad">6.00</span>
+        <div style="font-size:0.7rem;color:#484f58;">slope = 2(x−3)</div>
+      </div>
+      <div class="gd-stat">
+        Step #: <span id="stat-step">0</span>
+        <div style="font-size:0.7rem;color:#484f58;">iterations so far</div>
+      </div>
     </div>
-    <div id="gd-message" class="result-box" style="margin-top:16px;display:none;"></div>
+
+    <div id="gd-message" class="result-box" style="display:none;"></div>
+  </div>
+
+  <!-- EXPERIMENTS -->
+  <div class="card">
+    <h3>Try These 3 Experiments</h3>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+
+      <div style="background:#0d1117;border:1px solid #2ea043;border-radius:8px;padding:14px;">
+        <div style="display:flex;gap:12px;align-items:center;margin-bottom:8px;">
+          <button onclick="setLR(0.1);gdReset();" style="padding:6px 14px;font-size:0.82rem;">Try η = 0.1</button>
+          <strong style="color:#3fb950;font-size:0.88rem;">✓ Good learning rate</strong>
+        </div>
+        <p style="font-size:0.83rem;color:#8b949e;line-height:1.7;">
+          Click Auto and watch the ball glide smoothly toward x=3 in about 30 steps.
+          Each step reduces the loss predictably. This is what healthy training looks like.
+        </p>
+      </div>
+
+      <div style="background:#0d1117;border:1px solid #d29922;border-radius:8px;padding:14px;">
+        <div style="display:flex;gap:12px;align-items:center;margin-bottom:8px;">
+          <button onclick="setLR(0.01);gdReset();" style="padding:6px 14px;font-size:0.82rem;background:#b08800;border-color:#d29922;">Try η = 0.01</button>
+          <strong style="color:#d29922;font-size:0.88rem;">🐢 Too small — slow convergence</strong>
+        </div>
+        <p style="font-size:0.83rem;color:#8b949e;line-height:1.7;">
+          The ball inches toward the minimum one tiny step at a time. It will get there eventually,
+          but it takes hundreds of steps instead of 30. In real ML this means hours of training instead of minutes.
+        </p>
+      </div>
+
+      <div style="background:#0d1117;border:1px solid #ff7b72;border-radius:8px;padding:14px;">
+        <div style="display:flex;gap:12px;align-items:center;margin-bottom:8px;">
+          <button onclick="setLR(1.05);gdReset();" style="padding:6px 14px;font-size:0.82rem;background:#da3633;border-color:#f85149;">Try η = 1.05</button>
+          <strong style="color:#ff7b72;font-size:0.88rem;">💥 Too large — exploding gradient</strong>
+        </div>
+        <p style="font-size:0.83rem;color:#8b949e;line-height:1.7;">
+          Each step overshoots the valley and lands on the other side — which is even higher.
+          The next step overshoots further. The loss explodes toward infinity instead of decreasing.
+          This is called an <strong style="color:#e6edf3">exploding gradient</strong> — a very common training failure.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONNECTION TO W1 -->
+  <div class="card">
+    <h3>How This Connects to W1 and Real Neural Networks</h3>
+    <div style="font-size:0.88rem;color:#8b949e;line-height:1.9;">
+      <p style="margin-bottom:12px;">
+        This simulator has <strong style="color:#e6edf3">one weight (x)</strong> on a simple 2D curve.
+        A real neural network has <strong style="color:#e6edf3">millions of weights</strong> — each one is its own "x" on its own dimension of the loss landscape.
+      </p>
+      <p style="margin-bottom:12px;">
+        But the update rule is <strong style="color:#e6edf3">identical</strong> for every single weight:
+      </p>
+      <div style="font-family:monospace;font-size:0.85rem;background:#0d1117;border-radius:6px;padding:14px;line-height:2.1;margin-bottom:12px;">
+        <span style="color:#8b949e"># Simulator (1 weight):</span><br>
+        x &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = x &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; − η × <span style="color:#d29922">2(x−3)</span><br><br>
+        <span style="color:#8b949e"># Neural network W1 (12 weights, all at once):</span><br>
+        W1<span style="color:#484f58">[4×3]</span> = W1<span style="color:#484f58">[4×3]</span> − η × <span style="color:#d29922">∇W1</span><span style="color:#484f58">[4×3]</span>
+        <span style="color:#8b949e">&nbsp;← same formula, matrix form</span>
+      </div>
+      <p>
+        Backpropagation just computes <code style="color:#d29922">∇W1</code> (the gradient matrix for W1) efficiently.
+        Then gradient descent subtracts it — the same one-line update, applied to all 12 cells simultaneously.
+        Every weight in the network slides toward lower loss, step by step, until training converges.
+      </p>
+    </div>
   </div>
 </div>
 
@@ -1141,6 +1297,12 @@ function gdReset() {
 function updateLR() {
   gdLR = parseFloat(document.getElementById('lr-slider').value);
   document.getElementById('lr-display').textContent = gdLR.toFixed(2);
+}
+
+function setLR(val) {
+  gdLR = val;
+  document.getElementById('lr-slider').value = val;
+  document.getElementById('lr-display').textContent = val.toFixed(2);
 }
 
 // Init
