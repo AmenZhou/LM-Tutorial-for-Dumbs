@@ -411,23 +411,84 @@ function renderStage3() {
 
   document.getElementById('stage-content').innerHTML = `
     <div class="panel">
-      <h3>Stage 3 — Correlation Matrix Heatmap</h3>
-      <div style="overflow-x:auto;">${heatHTML}</div>
-      <div style="margin-top:16px;background:#da363322;border:1px solid #f85149;border-radius:8px;padding:14px;font-size:0.85rem;color:#ff7b72;">
-        ⚠️ <strong>RAM_GB ↔ RAM_MB: r = 0.98</strong> — Near-perfect correlation detected. Both columns carry identical information.
-        Keeping both will create unstable weight estimates (the "twin GPS" problem).
+      <h3>Stage 3 — Redundancy Detection (Correlation)</h3>
+
+      <!-- PLAIN ENGLISH EXPLAINER -->
+      <div style="background:#1f3a5f22;border:1px solid #1f6feb;border-radius:8px;padding:16px;margin-bottom:20px;">
+        <div style="font-size:0.75rem;color:#58a6ff;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">💡 What is correlation and why does it matter?</div>
+        <p style="font-size:0.88rem;color:#8b949e;line-height:1.8;margin-bottom:12px;">
+          <strong style="color:#e6edf3">Correlation</strong> measures how much two columns move together.
+          It gives a score <strong style="color:#e6edf3">r</strong> between −1 and +1:
+        </p>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;font-size:0.83rem;text-align:center;">
+          <div style="background:#0d1117;border-radius:6px;padding:10px;">
+            <div style="font-size:1.3rem;font-weight:800;color:#3fb950;font-family:monospace;">r ≈ 1.0</div>
+            <div style="color:#8b949e;margin-top:4px;">When one goes up,<br>the other goes up too.<br><strong style="color:#e6edf3">In sync.</strong></div>
+          </div>
+          <div style="background:#0d1117;border-radius:6px;padding:10px;">
+            <div style="font-size:1.3rem;font-weight:800;color:#8b949e;font-family:monospace;">r ≈ 0.0</div>
+            <div style="color:#8b949e;margin-top:4px;">No relationship.<br>They move independently.<br><strong style="color:#e6edf3">Unrelated.</strong></div>
+          </div>
+          <div style="background:#0d1117;border-radius:6px;padding:10px;">
+            <div style="font-size:1.3rem;font-weight:800;color:#58a6ff;font-family:monospace;">r ≈ −1.0</div>
+            <div style="color:#8b949e;margin-top:4px;">When one goes up,<br>the other goes down.<br><strong style="color:#e6edf3">Opposites.</strong></div>
+          </div>
+        </div>
+        <p style="font-size:0.88rem;color:#8b949e;line-height:1.8;">
+          <strong style="color:#e6edf3">The problem:</strong> RAM_GB (gigabytes) and RAM_MB (megabytes) measure the exact same thing —
+          just in different units. Their correlation is <strong style="color:#ff7b72">r = 0.98</strong> (nearly perfect).
+          If you feed both columns to a model, it gets confused: <em>"which column is responsible for the prediction — GB or MB?"</em>
+          It can't tell, so it assigns chaotic weights that cancel each other out.
+          <br><br>
+          <strong style="color:#3fb950">The fix:</strong> drop one. They carry identical information, so you lose nothing.
+        </p>
       </div>
-      <div style="overflow-x:auto;margin-top:16px;">
-        <p style="font-size:0.82rem;color:#8b949e;margin-bottom:8px;">After pruning RAM_MB:</p>
-        <table><thead><tr><th>Containers_Active</th><th>Log_API_Latency</th><th>RAM_GB</th><th style="color:#484f58;">RAM_MB (dropped)</th></tr></thead>
-        <tbody>${logTable.map(r=>`<tr>
-          <td>${r.Containers_Active}</td>
-          <td>${r.Log_API_Latency.toFixed(4)}</td>
-          <td>${r.RAM_GB}</td>
-          <td><span class="dropped-cell">${r.RAM_MB}</span></td>
-        </tr>`).join('')}</tbody></table>
+
+      <!-- HEATMAP -->
+      <p style="font-size:0.82rem;color:#8b949e;margin-bottom:10px;">
+        Heatmap — each cell shows the correlation between two columns. <span style="color:#ff4444">Red = near 1.0 = redundant.</span>
+      </p>
+      <div style="overflow-x:auto;margin-bottom:20px;">${heatHTML}</div>
+
+      <!-- BEFORE / AFTER SIDE BY SIDE -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+        <div>
+          <p style="font-size:0.82rem;color:#ff7b72;margin-bottom:8px;font-weight:700;">⚠️ Before — 4 columns (RAM_MB is redundant)</p>
+          <div style="overflow-x:auto;">
+            <table style="font-size:0.78rem;">
+              <thead><tr>
+                <th>Containers</th><th>Log_Latency</th><th>RAM_GB</th>
+                <th style="color:#ff7b72;background:#3a0000;">RAM_MB ✕</th>
+              </tr></thead>
+              <tbody>${logTable.slice(0,5).map(r=>`<tr>
+                <td>${r.Containers_Active}</td>
+                <td>${r.Log_API_Latency.toFixed(2)}</td>
+                <td>${r.RAM_GB}</td>
+                <td style="color:#ff7b72;background:#1a0000;">${r.RAM_MB}</td>
+              </tr>`).join('')}</tbody>
+            </table>
+          </div>
+          <p style="font-size:0.75rem;color:#ff7b72;margin-top:6px;">RAM_MB = RAM_GB × 1024. Same data, different unit. Feeding both confuses the model.</p>
+        </div>
+        <div>
+          <p style="font-size:0.82rem;color:#3fb950;margin-bottom:8px;font-weight:700;">✅ After — 3 columns (RAM_MB dropped)</p>
+          <div style="overflow-x:auto;">
+            <table style="font-size:0.78rem;">
+              <thead><tr>
+                <th>Containers</th><th>Log_Latency</th><th>RAM_GB</th>
+              </tr></thead>
+              <tbody>${prunedTable.slice(0,5).map(r=>`<tr>
+                <td>${r.Containers_Active}</td>
+                <td>${r.Log_API_Latency.toFixed(2)}</td>
+                <td>${r.RAM_GB}</td>
+              </tr>`).join('')}</tbody>
+            </table>
+          </div>
+          <p style="font-size:0.75rem;color:#3fb950;margin-top:6px;">One column removed. No information lost. Model weights will now be stable.</p>
+        </div>
       </div>
-      <div style="margin-top:16px;"><button onclick="unlock(4);goStage(4);">▶ Run Stage 4 — Scale Features</button></div>
+
+      <div style="margin-top:4px;"><button onclick="unlock(4);goStage(4);">▶ Run Stage 4 — Scale Features</button></div>
     </div>`;
 }
 
