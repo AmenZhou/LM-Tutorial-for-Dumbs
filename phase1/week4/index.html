@@ -310,25 +310,65 @@ function renderStage2() {
   document.getElementById('stage-content').innerHTML = `
     <div class="panel">
       <h3>Stage 2 — API_Latency_ms Before vs After Log Transform</h3>
+
+      <!-- WHAT IS SKEWNESS -->
+      <div style="background:#1f3a5f22;border:1px solid #1f6feb;border-radius:8px;padding:16px;margin-bottom:20px;">
+        <div style="font-size:0.75rem;color:#58a6ff;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">💡 What is skewness?</div>
+        <p style="font-size:0.88rem;color:#8b949e;line-height:1.8;margin-bottom:14px;">
+          Skewness measures <strong style="color:#e6edf3">how lopsided a chart is</strong>.
+          A perfect bell curve (balanced on both sides) has skewness = 0.
+          A chart with a long tail dragging to the right has <strong style="color:#ff7b72">high positive skewness</strong>.
+        </p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+          <div style="background:#0d1117;border-radius:6px;padding:12px;">
+            <div style="font-size:0.75rem;color:#ff7b72;margin-bottom:8px;font-weight:700;">⚠️ High skewness (like our latency data)</div>
+            <div style="font-family:monospace;font-size:0.78rem;color:#8b949e;line-height:1.9;">
+              <span style="color:#e6edf3">█████████████████</span> &nbsp;5–50ms (most requests)<br>
+              <span style="color:#ff7b72">██</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;200–500ms<br>
+              <span style="color:#ff4444">▌</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;9,000ms ← spike<br>
+            </div>
+            <p style="font-size:0.78rem;color:#ff7b72;margin-top:8px;">The spike is tiny in count but <strong>9,000× bigger in value</strong>. The model obsesses over it and ignores the normal data.</p>
+          </div>
+          <div style="background:#0d1117;border-radius:6px;padding:12px;">
+            <div style="font-size:0.75rem;color:#3fb950;margin-bottom:8px;font-weight:700;">✅ Low skewness (after log transform)</div>
+            <div style="font-family:monospace;font-size:0.78rem;color:#8b949e;line-height:1.9;">
+              <span style="color:#3fb950">█████</span> &nbsp;ln(5–50ms) → 1.8–3.9<br>
+              <span style="color:#3fb950">███████████</span> &nbsp;ln(200ms) → 5.3<br>
+              <span style="color:#3fb950">██████████████</span> &nbsp;ln(9000ms) → 9.1<br>
+            </div>
+            <p style="font-size:0.78rem;color:#3fb950;margin-top:8px;">Gap compressed from 8,950 units → ~7 units. Chart is now a balanced bell. Model treats all values fairly.</p>
+          </div>
+        </div>
+        <div style="background:#0d1117;border-radius:6px;padding:10px;font-size:0.82rem;color:#8b949e;line-height:1.8;">
+          <strong style="color:#e6edf3">Skewness score guide:</strong>
+          &nbsp;<span style="color:#3fb950">−0.5 to +0.5</span> = good (roughly balanced) &nbsp;·&nbsp;
+          <span style="color:#d29922">+0.5 to +1.0</span> = moderate skew &nbsp;·&nbsp;
+          <span style="color:#ff7b72">&gt; +1.0</span> = severe skew → apply log transform
+        </div>
+      </div>
+
       <div class="grid-2">
         <div>
-          <p style="font-size:0.82rem;color:#ff7b72;margin-bottom:8px;">Before — Raw Latency (skewed)</p>
+          <p style="font-size:0.82rem;color:#ff7b72;margin-bottom:8px;">Before — Raw Latency (skewed — long tail to the right)</p>
           <canvas id="s2-raw" width="400" height="180"></canvas>
           <div class="stat-box" style="margin-top:8px;">
-            <div class="stat-label">Skewness</div>
-            <div class="stat-val" style="color:#ff7b72;">${rawSkew.toFixed(2)}</div>
+            <div class="stat-label">Skewness score</div>
+            <div class="stat-val" style="color:#ff7b72;">${rawSkew.toFixed(2)} ← severe</div>
           </div>
         </div>
         <div>
-          <p style="font-size:0.82rem;color:#3fb950;margin-bottom:8px;">After — Log Transformed (symmetric)</p>
+          <p style="font-size:0.82rem;color:#3fb950;margin-bottom:8px;">After — Log Transformed (balanced bell curve)</p>
           <canvas id="s2-log" width="400" height="180"></canvas>
           <div class="stat-box" style="margin-top:8px;">
-            <div class="stat-label">Skewness</div>
-            <div class="stat-val" style="color:#3fb950;">${logSkew.toFixed(2)}</div>
+            <div class="stat-label">Skewness score</div>
+            <div class="stat-val" style="color:#3fb950;">${logSkew.toFixed(2)} ← good</div>
           </div>
         </div>
       </div>
       <div style="overflow-x:auto;margin-top:16px;">
+        <p style="font-size:0.82rem;color:#8b949e;margin-bottom:8px;">
+          Each row: raw latency → log-transformed value. Notice how 9,000ms becomes ~9.1, while 20ms becomes ~3.0 — the gap is tiny now.
+        </p>
         <table><thead><tr><th>Containers_Active</th><th>API_Latency_ms (raw)</th><th>→</th><th>Log_API_Latency</th><th>RAM_GB</th><th>RAM_MB</th></tr></thead>
         <tbody>${logTable.map(r=>`<tr>
           <td>${r.Containers_Active}</td>
