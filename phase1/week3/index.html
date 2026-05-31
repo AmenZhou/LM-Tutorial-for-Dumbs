@@ -98,6 +98,7 @@
   <div style="flex:1"></div>
   <div class="xp-bar"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
   <div class="xp-label">XP: <strong id="xp-display">0</strong> / 300</div>
+  <button onclick="clearState()" style="padding:5px 12px;font-size:0.75rem;background:#21262d;border:1px solid #30363d;color:#8b949e;border-radius:6px;cursor:pointer;flex:none;">↺ Reset progress</button>
 </div>
 
 <main>
@@ -230,13 +231,107 @@
 </main>
 
 <script>
+// ============ PERSISTENCE ============
+const SAVE_KEY = 'ml-tutorial-week3-v1';
+
+function saveState() {
+  const state = {
+    xp,
+    currentLevel,
+    unlockedLevels: [...unlockedLevels],
+    l1: { rawShown, logShown: document.getElementById('hist-stats').style.display !== 'none' && rawShown,
+          answered: l1Answered, correct: l1Correct },
+    l2: { q1done: l2q1done, q1correct: l2q1correct, q2done: l2q2done, q2correct: l2q2correct },
+    l3: { dropped: l3DroppedFeature }
+  };
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+function clearState() {
+  try { localStorage.removeItem(SAVE_KEY); } catch(e) {}
+  location.reload();
+}
+
+function loadState() {
+  let state;
+  try { state = JSON.parse(localStorage.getItem(SAVE_KEY)); } catch(e) {}
+  if (!state) return;
+
+  // Restore XP
+  xp = state.xp || 0;
+  document.getElementById('xp-display').textContent = xp;
+  document.getElementById('xp-fill').style.width = (xp / 300 * 100) + '%';
+
+  // Restore unlocked levels
+  unlockedLevels = new Set(state.unlockedLevels || [1]);
+  [1,2,3].forEach(i => {
+    const pill = document.getElementById('pill-' + i);
+    if (unlockedLevels.has(i) && i !== (state.currentLevel || 1)) pill.className = 'level-pill done';
+  });
+
+  // Restore Level 1
+  if (state.l1) {
+    if (state.l1.rawShown) { showRaw(); }
+    if (state.l1.logShown) { showLog(); }
+    if (state.l1.answered) {
+      l1Answered = true; l1Correct = state.l1.correct;
+      document.querySelectorAll('#l1-question .opt-btn').forEach((b, i) => {
+        b.disabled = true;
+        if (i === 0) b.className = 'opt-btn correct';
+      });
+      if (state.l1.correct) document.getElementById('l1-celebrate').style.display = 'block';
+    }
+  }
+
+  // Restore Level 2
+  if (state.l2 && state.l2.q1done) {
+    l2q1done = true; l2q1correct = state.l2.q1correct;
+    document.querySelectorAll('#q1-opts .opt-btn').forEach((b, i) => {
+      b.disabled = true;
+      if (i === 1) b.className = 'opt-btn correct';
+      else if (i !== 1 && !state.l2.q1correct) b.className = 'opt-btn wrong';
+    });
+    document.getElementById('q2-block').style.display = 'block';
+    document.getElementById('q2-opts').style.display = 'block';
+  }
+  if (state.l2 && state.l2.q2done) {
+    l2q2done = true; l2q2correct = state.l2.q2correct;
+    document.querySelectorAll('#q2-opts .opt-btn').forEach((b, i) => {
+      b.disabled = true;
+      if (i === 3) b.className = 'opt-btn correct';
+    });
+    document.getElementById('l2-celebrate').style.display = 'block';
+  }
+
+  // Restore Level 3
+  if (state.l3 && state.l3.dropped) {
+    l3DroppedFeature = state.l3.dropped;
+    setTimeout(() => {
+      const result = document.getElementById('drop-result');
+      if (result) {
+        result.style.display = 'block';
+        result.innerHTML = `<span class="green">✓ Previously dropped: ${state.l3.dropped}. Multicollinearity resolved.</span>`;
+        document.querySelectorAll('#drop-opts button').forEach(b => b.disabled = true);
+      }
+      document.getElementById('l3-celebrate').style.display = 'block';
+    }, 400);
+  }
+
+  // Go to saved level
+  setTimeout(() => goLevel(state.currentLevel || 1), 150);
+}
+
 // ============ XP / LEVEL SYSTEM ============
 let xp = 0, currentLevel = 1, unlockedLevels = new Set([1]);
+let l1Answered = false, l1Correct = false;
+let l2q1correct = false, l2q2correct = false;
+let l3DroppedFeature = null;
 
 function addXP(amount) {
   xp = Math.min(300, xp + amount);
   document.getElementById('xp-display').textContent = xp;
   document.getElementById('xp-fill').style.width = (xp / 300 * 100) + '%';
+  saveState();
 }
 
 function goLevel(n) {
@@ -251,11 +346,13 @@ function goLevel(n) {
   });
   if (n === 2 && !scattersDrawn) { setTimeout(drawScatters, 100); }
   if (n === 3) { setTimeout(drawHeatmap, 100); }
+  saveState();
 }
 
 function unlockLevel(n) {
   unlockedLevels.add(n);
   document.getElementById('pill-' + n).className = 'level-pill done';
+  saveState();
 }
 
 // ============ LEVEL 1: HISTOGRAM ============
@@ -374,6 +471,8 @@ function drawHistogram(canvasId, data, color, label, smooth) {
 }
 
 function l1Answer(btn, correct) {
+  if (l1Answered) return;
+  l1Answered = true; l1Correct = correct;
   document.querySelectorAll('#l1-question .opt-btn').forEach(b => b.disabled = true);
   btn.className = 'opt-btn ' + (correct ? 'correct' : 'wrong');
   if (!correct) {
@@ -385,6 +484,7 @@ function l1Answer(btn, correct) {
     unlockLevel(2);
     setTimeout(() => goLevel(2), 2000);
   }
+  saveState();
 }
 
 function resetL1() {
@@ -504,20 +604,21 @@ function drawScatters() {
 let l2q1done = false;
 function l2Q1(btn, ans, correct) {
   if (l2q1done) return;
-  l2q1done = true;
+  l2q1done = true; l2q1correct = correct;
   document.querySelectorAll('#q1-opts .opt-btn').forEach(b => b.disabled = true);
   btn.className = 'opt-btn ' + (correct ? 'correct' : 'wrong');
   if (!correct) document.querySelectorAll('#q1-opts .opt-btn')[1].className = 'opt-btn correct';
   setTimeout(() => {
     document.getElementById('q2-block').style.display = 'block';
     document.getElementById('q2-opts').style.display = 'block';
+    saveState();
   }, 600);
 }
 
 let l2q2done = false;
 function l2Q2(btn, ans, correct) {
   if (l2q2done) return;
-  l2q2done = true;
+  l2q2done = true; l2q2correct = correct;
   document.querySelectorAll('#q2-opts .opt-btn').forEach(b => b.disabled = true);
   btn.className = 'opt-btn ' + (correct ? 'correct' : 'wrong');
   if (!correct) document.querySelectorAll('#q2-opts .opt-btn')[3].className = 'opt-btn correct';
@@ -525,6 +626,7 @@ function l2Q2(btn, ans, correct) {
   document.getElementById('l2-celebrate').style.display = 'block';
   unlockLevel(3);
   setTimeout(() => goLevel(3), 2200);
+  saveState();
 }
 
 // ============ LEVEL 3: HEATMAP ============
@@ -596,6 +698,7 @@ function l3Drop(feature) {
   const result = document.getElementById('drop-result');
   result.style.display = 'block';
   if (feature === 'RAM_MB') {
+    l3DroppedFeature = 'RAM_MB';
     result.innerHTML =
       `<span class="green">✓ Correct! Dropped RAM_MB (less readable unit).</span>\n` +
       `  RAM_GB is kept — same data, human-friendly scale.\n\n` +
@@ -605,6 +708,7 @@ function l3Drop(feature) {
     addXP(100);
     document.getElementById('l3-celebrate').style.display = 'block';
     document.querySelectorAll('#drop-opts button').forEach(b => b.disabled = true);
+    saveState();
   } else if (feature === 'RAM_GB') {
     result.innerHTML =
       `<span class="yellow">⚠️ Technically valid but suboptimal. RAM_GB is kept → RAM_MB is the better drop.</span>\n` +
@@ -617,10 +721,15 @@ function l3Drop(feature) {
   }
 }
 
-// Init
+// Init — restore saved state or start fresh
 setTimeout(() => {
-  resetL1();
-  drawScatters();
+  const hasSave = (() => { try { return !!localStorage.getItem(SAVE_KEY); } catch(e) { return false; } })();
+  if (hasSave) {
+    loadState();
+  } else {
+    resetL1();
+    drawScatters();
+  }
 }, 100);
 </script>
 </body>
