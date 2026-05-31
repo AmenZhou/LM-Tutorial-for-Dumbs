@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ML/DS Learning Arena</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #0d1117;
+    color: #e6edf3;
+    min-height: 100vh;
+  }
+  header {
+    background: linear-gradient(135deg, #161b22 0%, #0d1117 100%);
+    border-bottom: 1px solid #30363d;
+    padding: 40px 60px;
+    text-align: center;
+  }
+  header h1 {
+    font-size: 2.8rem;
+    font-weight: 800;
+    background: linear-gradient(90deg, #58a6ff, #bc8cff, #ff7b72);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 12px;
+  }
+  header p {
+    color: #8b949e;
+    font-size: 1.1rem;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .badge {
+    display: inline-block;
+    background: #1f6feb22;
+    border: 1px solid #1f6feb;
+    color: #58a6ff;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    margin-top: 16px;
+  }
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 60px 30px;
+  }
+  .phase-label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #8b949e;
+    margin-bottom: 24px;
+  }
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 20px;
+    margin-bottom: 60px;
+  }
+  .card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 28px;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    display: block;
+  }
+  .card:hover {
+    border-color: var(--accent);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+  }
+  .card-icon { font-size: 2.4rem; margin-bottom: 16px; }
+  .card-week {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+  .card h3 { font-size: 1.1rem; margin-bottom: 10px; }
+  .card p { font-size: 0.88rem; color: #8b949e; line-height: 1.6; }
+  .card-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+  .tag {
+    background: #21262d;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 0.72rem;
+    color: #8b949e;
+  }
+  .progress-bar {
+    height: 3px;
+    background: #21262d;
+    border-radius: 2px;
+    margin-top: 16px;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--accent);
+  }
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 12px;
+    font-size: 0.78rem;
+    color: #8b949e;
+  }
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  footer {
+    text-align: center;
+    padding: 40px;
+    color: #484f58;
+    font-size: 0.85rem;
+    border-top: 1px solid #21262d;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>🎮 ML/DS Learning Arena</h1>
+  <p>Master machine learning through interactive games, visual simulators, and hands-on challenges.</p>
+  <span class="badge">Phase 1 — Data Foundations & Math Intuition</span>
+</header>
+
+<main>
+  <p class="phase-label">Phase 1 · 4 Weeks · Build the Foundation</p>
+
+  <div class="cards">
+
+    <a href="phase1/week1/index.html" class="card" style="--accent: #58a6ff;">
+      <div class="card-icon">🔬</div>
+      <div class="card-week">Week 1</div>
+      <h3>Data Foundations Sandbox</h3>
+      <p>Run live benchmarks, wrangle dirty data, multiply matrices, and watch gradient descent roll downhill.</p>
+      <div class="card-tags">
+        <span class="tag">NumPy</span>
+        <span class="tag">Pandas</span>
+        <span class="tag">Gradient Descent</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+      <div class="status"><span class="status-dot"></span> 4 interactive modules</div>
+    </a>
+
+    <a href="phase1/week2/index.html" class="card" style="--accent: #3fb950;">
+      <div class="card-icon">☁️</div>
+      <div class="card-week">Week 2</div>
+      <h3>Cloud Cost Optimizer Game</h3>
+      <p>Train a model to predict AWS bills. Experience the "canyon of despair" vs. the "bowl of calm" — live.</p>
+      <div class="card-tags">
+        <span class="tag">Feature Scaling</span>
+        <span class="tag">Multi-variable</span>
+        <span class="tag">Loss Landscape</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+      <div class="status"><span class="status-dot"></span> Gradient Descent Arena</div>
+    </a>
+
+    <a href="phase1/week3/index.html" class="card" style="--accent: #d29922;">
+      <div class="card-icon">🕵️</div>
+      <div class="card-week">Week 3</div>
+      <h3>Data Detective Game</h3>
+      <p>Investigate a messy telemetry dataset. Find skew, spot relationships, and kill multicollinearity.</p>
+      <div class="card-tags">
+        <span class="tag">EDA</span>
+        <span class="tag">Log Transform</span>
+        <span class="tag">Correlation</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+      <div class="status"><span class="status-dot"></span> 3 investigation levels</div>
+    </a>
+
+    <a href="phase1/week4/index.html" class="card" style="--accent: #bc8cff;">
+      <div class="card-icon">🚀</div>
+      <div class="card-week">Week 4</div>
+      <h3>Phase 1 Capstone Pipeline</h3>
+      <p>Run a full end-to-end data preprocessing pipeline. Impute, transform, prune, and scale a raw dataset.</p>
+      <div class="card-tags">
+        <span class="tag">Preprocessing</span>
+        <span class="tag">Pipeline</span>
+        <span class="tag">Capstone</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+      <div class="status"><span class="status-dot"></span> 4-stage pipeline + quiz</div>
+    </a>
+
+  </div>
+
+  <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:32px;text-align:center;">
+    <p style="color:#8b949e;font-size:0.95rem;margin-bottom:12px;">💡 <strong style="color:#e6edf3">Learning path tip:</strong> Work through Week 1 → 2 → 3 → 4 in order. Each week builds on the last.</p>
+    <p style="color:#484f58;font-size:0.85rem;">Phase 2 (Core ML Algorithms — Linear Regression, Scikit-Learn) coming after you complete Phase 1.</p>
+  </div>
+</main>
+
+<footer>ML/DS Learning Arena · Phase 1 · Built for hands-on learners</footer>
+</body>
+</html>

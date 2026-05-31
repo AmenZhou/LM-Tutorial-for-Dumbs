@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 2 — Cloud Cost Optimizer Game</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0d1117; color: #e6edf3; min-height: 100vh; }
+  header {
+    background: #161b22; border-bottom: 1px solid #30363d;
+    padding: 16px 40px; display: flex; align-items: center; gap: 16px;
+  }
+  header a { color: #58a6ff; text-decoration: none; font-size: 0.9rem; }
+  header h1 { font-size: 1.4rem; }
+  .badge { background: #1a7f37; color: #3fb950; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; }
+  .mode-toggle {
+    background: #161b22; border-bottom: 1px solid #30363d;
+    padding: 16px 40px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  }
+  .mode-btn {
+    padding: 8px 20px; border-radius: 20px; cursor: pointer; font-size: 0.9rem; font-weight: 700;
+    border: 2px solid transparent; transition: all 0.2s;
+  }
+  .mode-btn.canyon { background: #ff7b7222; border-color: #ff7b72; color: #ff7b72; }
+  .mode-btn.bowl { background: #3fb95022; border-color: #3fb950; color: #3fb950; }
+  .mode-btn.active { opacity: 1; }
+  .mode-btn:not(.active) { opacity: 0.4; }
+  .mode-desc { font-size: 0.85rem; color: #8b949e; }
+  main { display: grid; grid-template-columns: 340px 1fr; gap: 24px; padding: 30px 40px; max-width: 1200px; }
+  .sidebar { display: flex; flex-direction: column; gap: 20px; }
+  .panel { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 22px; }
+  h3 { font-size: 1rem; margin-bottom: 16px; }
+  .weight-row { margin-bottom: 20px; }
+  .weight-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .weight-name { font-size: 0.85rem; color: #8b949e; }
+  .weight-val { font-size: 1.1rem; font-weight: 700; color: #58a6ff; font-family: monospace; }
+  input[type=range] { width: 100%; accent-color: #58a6ff; margin-bottom: 4px; }
+  .feature-scale { font-size: 0.72rem; color: #484f58; display: flex; justify-content: space-between; }
+  .loss-display {
+    background: #0d1117; border-radius: 8px; padding: 16px;
+    text-align: center; border: 1px solid #30363d; margin-bottom: 20px;
+  }
+  .loss-label { font-size: 0.8rem; color: #8b949e; margin-bottom: 4px; }
+  .loss-val { font-size: 2.2rem; font-weight: 800; font-family: monospace; }
+  .loss-val.good { color: #3fb950; }
+  .loss-val.ok { color: #d29922; }
+  .loss-val.bad { color: #ff7b72; }
+  .btn-row { display: flex; gap: 10px; }
+  button {
+    flex: 1; padding: 10px; border-radius: 8px; cursor: pointer;
+    font-size: 0.85rem; font-weight: 700; border: 1px solid #2ea043;
+    background: #238636; color: #fff; transition: background 0.2s;
+  }
+  button:hover { background: #2ea043; }
+  button.secondary { background: #21262d; border-color: #30363d; color: #e6edf3; }
+  button.secondary:hover { background: #30363d; }
+  button.danger { background: #da3633; border-color: #f85149; }
+  canvas { width: 100%; border-radius: 8px; display: block; }
+  .landscape-area { position: relative; }
+  .landscape-label {
+    font-size: 0.8rem; color: #8b949e; margin-bottom: 10px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .data-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-top: 12px; }
+  .data-table th { background: #21262d; padding: 7px 12px; text-align: left; color: #8b949e; }
+  .data-table td { padding: 7px 12px; border-bottom: 1px solid #21262d; font-family: monospace; }
+  .prediction { color: #58a6ff; }
+  .error { color: #ff7b72; }
+  .warn-box {
+    background: #da363322; border: 1px solid #f85149; border-radius: 8px;
+    padding: 14px; margin-top: 12px; font-size: 0.85rem; color: #ff7b72; display: none;
+  }
+  .success-box {
+    background: #3fb95022; border: 1px solid #2ea043; border-radius: 8px;
+    padding: 14px; margin-top: 12px; font-size: 0.85rem; color: #3fb950; display: none;
+  }
+  .score-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .score-pill { background: #21262d; border-radius: 6px; padding: 8px 14px; font-size: 0.82rem; flex: 1; text-align: center; }
+  .score-pill span { font-size: 1.2rem; font-weight: 700; color: #58a6ff; display: block; }
+  @media (max-width: 700px) {
+    main { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a href="../../index.html">← Back to Arena</a>
+  <div>
+    <div style="font-size:0.75rem;color:#8b949e;text-transform:uppercase;letter-spacing:1px;">Week 2</div>
+    <h1>☁️ Cloud Cost Optimizer Game</h1>
+  </div>
+  <span class="badge">Gradient Descent Arena</span>
+</header>
+
+<div class="mode-toggle">
+  <div>
+    <button class="mode-btn canyon active" id="btn-raw" onclick="setMode('raw')">⚠️ Raw Mode (Canyon)</button>
+    <button class="mode-btn bowl" id="btn-std" onclick="setMode('std')">✅ Standardized Mode (Bowl)</button>
+  </div>
+  <div class="mode-desc" id="mode-desc">
+    Raw features: EC2 (1–10) vs DB Reads (10k–200k). Completely different scales — watch chaos ensue.
+  </div>
+</div>
+
+<main>
+  <div class="sidebar">
+
+    <div class="panel">
+      <h3>🎯 Mission</h3>
+      <p style="font-size:0.85rem;color:#8b949e;line-height:1.7;">
+        Train a model to predict monthly AWS bills. Adjust the weights (w₁, w₂) to minimize the prediction error.
+        <br><br>
+        <strong style="color:#e6edf3">Goal:</strong> Get Loss below <span style="color:#3fb950">10</span>.
+      </p>
+    </div>
+
+    <div class="panel">
+      <div class="loss-display">
+        <div class="loss-label">Mean Squared Loss</div>
+        <div class="loss-val bad" id="loss-display">—</div>
+      </div>
+
+      <div class="weight-row">
+        <div class="weight-label">
+          <span class="weight-name">w₁ — EC2 Server Count</span>
+          <span class="weight-val" id="w1-display">0.00</span>
+        </div>
+        <input type="range" id="w1-slider" min="-500" max="2500" step="1" value="0" oninput="updateWeights()">
+        <div class="feature-scale">
+          <span id="w1-scale-min"></span>
+          <span id="w1-scale-max"></span>
+        </div>
+      </div>
+
+      <div class="weight-row">
+        <div class="weight-label">
+          <span class="weight-name">w₂ — DB Read Requests</span>
+          <span class="weight-val" id="w2-display">0.00</span>
+        </div>
+        <input type="range" id="w2-slider" min="-500" max="2500" step="0.00001" value="0" oninput="updateWeights()">
+        <div class="feature-scale">
+          <span id="w2-scale-min"></span>
+          <span id="w2-scale-max"></span>
+        </div>
+      </div>
+
+      <div class="btn-row" style="margin-bottom:12px;">
+        <button onclick="autoGD()" id="auto-btn">▶ Auto</button>
+        <button class="secondary" onclick="resetWeights()">↺ Reset</button>
+      </div>
+      <div class="warn-box" id="warn-box">⚠️ <strong>Exploding Gradient!</strong> Weight magnitude blew up. The loss landscape is too steep to navigate in Raw Mode. Switch to Standardized Mode!</div>
+      <div class="success-box" id="success-box">🎉 <strong>Converged!</strong> Loss &lt; 10 achieved! The gradient descent found the minimum. Notice how much easier it is in Standardized Mode.</div>
+    </div>
+
+    <div class="panel">
+      <h3>📊 Score</h3>
+      <div class="score-row">
+        <div class="score-pill">Steps<span id="step-count">0</span></div>
+        <div class="score-pill">Best Loss<span id="best-loss">—</span></div>
+        <div class="score-pill">Mode<span id="mode-score">Raw</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="panel" style="margin-bottom:20px;">
+      <div class="landscape-label">
+        <span id="landscape-title">Loss Landscape (Raw Mode — Canyon of Despair)</span>
+        <span style="font-size:0.75rem;color:#484f58">● = current position</span>
+      </div>
+      <canvas id="landscape-canvas" height="300"></canvas>
+    </div>
+
+    <div class="panel">
+      <h3>📋 Training Data — AWS Bills</h3>
+      <p style="font-size:0.82rem;color:#8b949e;margin-bottom:12px;" id="data-desc">
+        Prediction: <code style="color:#58a6ff">bill = w₁ × servers + w₂ × db_reads</code> (raw values)
+      </p>
+      <div style="overflow-x:auto;">
+        <table class="data-table" id="data-table"></table>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+// ============ DATA ============
+const rawData = [
+  { dept: 'Auth',    servers: 3,  db: 15000,  bill: 480  },
+  { dept: 'Billing', servers: 8,  db: 120000, bill: 2800 },
+  { dept: 'Search',  servers: 2,  db: 45000,  bill: 970  },
+  { dept: 'Storage', servers: 10, db: 200000, bill: 4500 },
+  { dept: 'Cache',   servers: 1,  db: 10000,  bill: 310  },
+  { dept: 'API',     servers: 6,  db: 80000,  bill: 1850 },
+];
+
+// Standardize
+function computeMeanStd(arr) {
+  const mean = arr.reduce((a,b)=>a+b,0) / arr.length;
+  const std = Math.sqrt(arr.reduce((s,x)=>s+(x-mean)**2,0)/arr.length);
+  return { mean, std };
+}
+const serverStat = computeMeanStd(rawData.map(d=>d.servers));
+const dbStat = computeMeanStd(rawData.map(d=>d.db));
+const billStat = computeMeanStd(rawData.map(d=>d.bill));
+
+const stdData = rawData.map(d => ({
+  dept: d.dept,
+  servers: (d.servers - serverStat.mean) / serverStat.std,
+  db: (d.db - dbStat.mean) / dbStat.std,
+  bill: (d.bill - billStat.mean) / billStat.std,
+}));
+
+// ============ STATE ============
+let mode = 'raw'; // 'raw' | 'std'
+let w1 = 0, w2 = 0, steps = 0, bestLoss = Infinity;
+let autoRunning = false, autoTimer = null;
+
+function getData() { return mode === 'raw' ? rawData : stdData; }
+function getFeatures(d) { return mode === 'raw' ? [d.servers, d.db] : [d.servers, d.db]; }
+
+function computeLoss(w1_, w2_) {
+  return getData().reduce((sum, d) => {
+    const [f1, f2] = getFeatures(d);
+    const pred = w1_ * f1 + w2_ * f2;
+    return sum + (d.bill - pred) ** 2;
+  }, 0) / getData().length;
+}
+
+function computeGradients(w1_, w2_) {
+  let gw1 = 0, gw2 = 0;
+  const data = getData();
+  data.forEach(d => {
+    const [f1, f2] = getFeatures(d);
+    const pred = w1_ * f1 + w2_ * f2;
+    const err = pred - d.bill;
+    gw1 += (2 / data.length) * err * f1;
+    gw2 += (2 / data.length) * err * f2;
+  });
+  return [gw1, gw2];
+}
+
+// ============ UI ============
+function setMode(m) {
+  mode = m;
+  autoGD(true); // stop
+  w1 = 0; w2 = 0; steps = 0; bestLoss = Infinity;
+  document.getElementById('best-loss').textContent = '—';
+  document.getElementById('step-count').textContent = '0';
+  document.getElementById('mode-score').textContent = m === 'raw' ? 'Raw' : 'Standardized';
+
+  const btnR = document.getElementById('btn-raw');
+  const btnS = document.getElementById('btn-std');
+  btnR.classList.toggle('active', m === 'raw');
+  btnS.classList.toggle('active', m === 'std');
+  document.getElementById('warn-box').style.display = 'none';
+  document.getElementById('success-box').style.display = 'none';
+
+  if (m === 'raw') {
+    document.getElementById('mode-desc').textContent = 'Raw features: EC2 (1–10) vs DB Reads (10k–200k). Completely different scales — watch chaos ensue.';
+    document.getElementById('landscape-title').textContent = 'Loss Landscape (Raw Mode — Canyon of Despair)';
+    document.getElementById('data-desc').textContent = 'Prediction: bill = w₁ × servers + w₂ × db_reads  (raw values)';
+    document.getElementById('w1-scale-min').textContent = '-500';
+    document.getElementById('w1-scale-max').textContent = '2500';
+    document.getElementById('w2-scale-min').textContent = '-500';
+    document.getElementById('w2-scale-max').textContent = '2500';
+    document.getElementById('w1-slider').min = -500; document.getElementById('w1-slider').max = 2500; document.getElementById('w1-slider').step = 1;
+    document.getElementById('w2-slider').min = -0.01; document.getElementById('w2-slider').max = 0.04; document.getElementById('w2-slider').step = 0.00001;
+    document.getElementById('w1-slider').value = 0;
+    document.getElementById('w2-slider').value = 0;
+  } else {
+    document.getElementById('mode-desc').textContent = 'Standardized features: both EC2 and DB reads scaled to mean=0, std=1. Same playground — watch it converge smoothly.';
+    document.getElementById('landscape-title').textContent = 'Loss Landscape (Standardized Mode — Bowl of Calm)';
+    document.getElementById('data-desc').textContent = 'Prediction: bill = w₁ × z(servers) + w₂ × z(db_reads)  (z-score scaled)';
+    document.getElementById('w1-scale-min').textContent = '-500'; document.getElementById('w1-scale-max').textContent = '2500';
+    document.getElementById('w2-scale-min').textContent = '-500'; document.getElementById('w2-scale-max').textContent = '2500';
+    document.getElementById('w1-slider').min = -500; document.getElementById('w1-slider').max = 2500; document.getElementById('w1-slider').step = 1;
+    document.getElementById('w2-slider').min = -500; document.getElementById('w2-slider').max = 2500; document.getElementById('w2-slider').step = 1;
+    document.getElementById('w1-slider').value = 0;
+    document.getElementById('w2-slider').value = 0;
+  }
+  updateWeights();
+  drawLandscape();
+  renderTable();
+}
+
+function updateWeights() {
+  w1 = parseFloat(document.getElementById('w1-slider').value);
+  w2 = parseFloat(document.getElementById('w2-slider').value);
+  document.getElementById('w1-display').textContent = w1.toFixed(mode === 'raw' ? 2 : 4);
+  document.getElementById('w2-display').textContent = w2.toFixed(mode === 'raw' ? 5 : 2);
+  const loss = computeLoss(w1, w2);
+  updateLossDisplay(loss);
+  if (loss < bestLoss) { bestLoss = loss; document.getElementById('best-loss').textContent = loss.toFixed(1); }
+  drawLandscape();
+  renderTable();
+}
+
+function updateLossDisplay(loss) {
+  const el = document.getElementById('loss-display');
+  el.textContent = loss > 1e8 ? loss.toExponential(2) : loss.toFixed(1);
+  el.className = 'loss-val ' + (loss < 10 ? 'good' : loss < 1000 ? 'ok' : 'bad');
+  if (loss < 10) {
+    document.getElementById('success-box').style.display = 'block';
+    document.getElementById('warn-box').style.display = 'none';
+  }
+}
+
+function resetWeights() {
+  autoGD(true);
+  w1 = 0; w2 = 0; steps = 0; bestLoss = Infinity;
+  document.getElementById('w1-slider').value = 0;
+  document.getElementById('w2-slider').value = 0;
+  document.getElementById('best-loss').textContent = '—';
+  document.getElementById('step-count').textContent = '0';
+  document.getElementById('warn-box').style.display = 'none';
+  document.getElementById('success-box').style.display = 'none';
+  updateWeights();
+}
+
+function autoGD(forceStop = false) {
+  if (forceStop || autoRunning) {
+    clearInterval(autoTimer); autoRunning = false;
+    document.getElementById('auto-btn').textContent = '▶ Auto';
+    return;
+  }
+  autoRunning = true;
+  document.getElementById('auto-btn').textContent = '⏸ Pause';
+  autoTimer = setInterval(() => {
+    const lr = mode === 'raw' ? 0.00000001 : 0.03;
+    const [gw1, gw2] = computeGradients(w1, w2);
+    w1 -= lr * gw1;
+    w2 -= lr * gw2;
+    steps++;
+    document.getElementById('step-count').textContent = steps;
+    document.getElementById('w1-slider').value = mode === 'raw' ? Math.max(-500, Math.min(2500, w1)) : Math.max(-500, Math.min(2500, w1));
+    document.getElementById('w2-slider').value = mode === 'raw' ? Math.max(-0.01, Math.min(0.04, w2)) : Math.max(-500, Math.min(2500, w2));
+    const loss = computeLoss(w1, w2);
+    if (loss < bestLoss) { bestLoss = loss; document.getElementById('best-loss').textContent = loss.toFixed(1); }
+    updateLossDisplay(loss);
+    document.getElementById('w1-display').textContent = w1.toFixed(mode === 'raw' ? 2 : 4);
+    document.getElementById('w2-display').textContent = w2.toFixed(mode === 'raw' ? 5 : 2);
+    drawLandscape();
+    renderTable();
+
+    if (!isFinite(w1) || !isFinite(w2) || Math.abs(w1) > 1e9 || Math.abs(w2) > 1e9) {
+      autoGD(true);
+      document.getElementById('warn-box').style.display = 'block';
+    }
+    if (loss < 5) { autoGD(true); }
+  }, 80);
+}
+
+// ============ CANVAS LANDSCAPE ============
+function drawLandscape() {
+  const canvas = document.getElementById('landscape-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth || 600;
+  canvas.width = W; canvas.height = 300;
+  const H = 300;
+
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, W, H);
+
+  // Draw contour rings
+  // Find optimal weights for reference
+  const nRings = 12;
+  const cx = W / 2, cy = H / 2;
+
+  if (mode === 'raw') {
+    // Very elongated ellipses — canyon effect
+    const rx = W * 0.48, ry = H * 0.08;
+    for (let i = nRings; i >= 0; i--) {
+      const t = i / nRings;
+      const r = t;
+      const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 1);
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, rx * r, ry * r, 0, 0, Math.PI * 2);
+      const hue = 0 + t * 60;
+      ctx.strokeStyle = `hsla(${hue}, 80%, 50%, ${0.15 + t * 0.3})`;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+    ctx.fillStyle = 'rgba(255,123,114,0.15)';
+    ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry * 0.7, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#ff7b72'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('CANYON — impossible to navigate', cx, 30);
+    ctx.fillStyle = '#8b949e'; ctx.font = '11px sans-serif';
+    ctx.fillText('w₂ (DB reads) is 10,000× more sensitive than w₁ (servers)', cx, H - 12);
+  } else {
+    // Round bowl — easy to navigate
+    const r = Math.min(W, H) * 0.44;
+    for (let i = nRings; i >= 0; i--) {
+      const t = i / nRings;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, r * t, r * t * 0.9, 0, 0, Math.PI * 2);
+      const hue = 120 + t * 60;
+      ctx.strokeStyle = `hsla(${hue}, 70%, 50%, ${0.2 + t * 0.3})`;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+    ctx.fillStyle = 'rgba(63,185,80,0.1)';
+    ctx.beginPath(); ctx.ellipse(cx, cy, r, r * 0.9, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#3fb950'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('BOWL — smooth path to minimum', cx, 30);
+    ctx.fillStyle = '#8b949e'; ctx.font = '11px sans-serif';
+    ctx.fillText('Both features on same scale — gradient descent glides straight to center', cx, H - 12);
+  }
+
+  // Minimum star
+  ctx.fillStyle = '#ffd700';
+  drawStar(ctx, cx, cy, 8, 5, 0.4);
+
+  // Current position dot
+  const loss = computeLoss(w1, w2);
+  let dotX, dotY;
+  if (mode === 'raw') {
+    // Map w1 (0→500 range) and w2 (0→0.02 range) to canvas
+    const w1norm = Math.max(-1, Math.min(1, (w1 - 250) / 500));
+    const w2norm = Math.max(-1, Math.min(1, (w2 - 0.01) / 0.02));
+    dotX = cx + w1norm * W * 0.45;
+    dotY = cy + w2norm * H * 0.07;
+  } else {
+    const w1norm = Math.max(-1, Math.min(1, (w1 - 500) / 1500));
+    const w2norm = Math.max(-1, Math.min(1, (w2 - 500) / 1500));
+    dotX = cx + w1norm * Math.min(W, H) * 0.42;
+    dotY = cy + w2norm * Math.min(W, H) * 0.38;
+  }
+
+  // Trail
+  ctx.beginPath();
+  ctx.fillStyle = loss < 10 ? '#3fb950' : '#58a6ff';
+  ctx.arc(dotX, dotY, 10, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+
+  // Axis labels
+  ctx.fillStyle = '#484f58'; ctx.font = '11px monospace'; ctx.textAlign = 'left';
+  ctx.fillText('w₁ →', W - 50, cy + 4);
+  ctx.fillText('w₂ ↑', cx + 6, 48);
+  ctx.textAlign = 'left';
+}
+
+function drawStar(ctx, cx, cy, outerR, points, innerFrac) {
+  ctx.beginPath();
+  for (let i = 0; i < points * 2; i++) {
+    const angle = (i * Math.PI) / points - Math.PI / 2;
+    const r = i % 2 === 0 ? outerR : outerR * innerFrac;
+    const x = cx + r * Math.cos(angle);
+    const y = cy + r * Math.sin(angle);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.fillStyle = '#ffd700'; ctx.fill();
+}
+
+// ============ DATA TABLE ============
+function renderTable() {
+  const data = getData();
+  const rows = data.map(d => {
+    const [f1, f2] = getFeatures(d);
+    const pred = w1 * f1 + w2 * f2;
+    const err = Math.abs(d.bill - pred);
+    return `<tr>
+      <td>${d.dept}</td>
+      <td>${mode === 'raw' ? d.servers : d.servers.toFixed(2)}</td>
+      <td>${mode === 'raw' ? d.db.toLocaleString() : d.db.toFixed(2)}</td>
+      <td>$${mode === 'raw' ? d.bill : d.bill.toFixed(2)}</td>
+      <td class="prediction">${mode === 'raw' ? '$'+pred.toFixed(0) : pred.toFixed(2)}</td>
+      <td class="error">${err.toFixed(mode === 'raw' ? 0 : 2)}</td>
+    </tr>`;
+  });
+  document.getElementById('data-table').innerHTML = `
+    <thead><tr>
+      <th>Dept</th>
+      <th>Servers</th>
+      <th>DB Reads</th>
+      <th>Actual Bill</th>
+      <th>Prediction</th>
+      <th>Error</th>
+    </tr></thead>
+    <tbody>${rows.join('')}</tbody>`;
+}
+
+// Init
+setMode('raw');
+</script>
+</body>
+</html>

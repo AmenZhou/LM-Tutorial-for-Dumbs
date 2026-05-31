@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 3 — Data Detective Game</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0d1117; color: #e6edf3; min-height: 100vh; }
+  header {
+    background: #161b22; border-bottom: 1px solid #30363d;
+    padding: 16px 40px; display: flex; align-items: center; gap: 16px;
+  }
+  header a { color: #58a6ff; text-decoration: none; font-size: 0.9rem; }
+
+  .level-bar {
+    background: #161b22; border-bottom: 1px solid #30363d;
+    padding: 14px 40px; display: flex; gap: 16px; align-items: center;
+  }
+  .level-pill {
+    padding: 8px 20px; border-radius: 20px; font-size: 0.85rem; font-weight: 700;
+    cursor: pointer; border: 2px solid transparent; transition: all 0.2s;
+  }
+  .level-pill.done { background: #1a7f37; border-color: #2ea043; color: #3fb950; }
+  .level-pill.active { background: #1f3a5f; border-color: #58a6ff; color: #58a6ff; }
+  .level-pill.locked { background: #21262d; border-color: #30363d; color: #484f58; cursor: not-allowed; }
+  .xp-bar { flex: 1; background: #21262d; border-radius: 4px; height: 8px; max-width: 300px; }
+  .xp-fill { height: 100%; border-radius: 4px; background: #d29922; transition: width 0.5s; }
+  .xp-label { font-size: 0.8rem; color: #8b949e; }
+
+  main { max-width: 960px; margin: 0 auto; padding: 32px 40px; }
+  .panel { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 26px; margin-bottom: 20px; }
+  h2 { font-size: 1.3rem; margin-bottom: 8px; }
+  .case-badge { font-size: 0.75rem; color: #d29922; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .subtitle { color: #8b949e; font-size: 0.9rem; line-height: 1.7; margin-bottom: 20px; }
+  button {
+    padding: 10px 22px; border-radius: 8px; cursor: pointer; font-size: 0.88rem; font-weight: 600;
+    border: 1px solid #2ea043; background: #238636; color: #fff; transition: background 0.2s; margin: 4px;
+  }
+  button:hover { background: #2ea043; }
+  button.secondary { background: #21262d; border-color: #30363d; color: #e6edf3; }
+  button.secondary:hover { background: #30363d; }
+  button.warn { background: #da3633; border-color: #f85149; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  canvas { border-radius: 8px; display: block; max-width: 100%; margin: 16px auto; }
+  .result-box {
+    background: #0d1117; border: 1px solid #30363d; border-radius: 6px;
+    padding: 14px 18px; font-family: monospace; font-size: 0.88rem; margin-top: 14px; line-height: 1.9;
+  }
+  .green { color: #3fb950; }
+  .red { color: #ff7b72; }
+  .yellow { color: #d29922; }
+  .blue { color: #58a6ff; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  th { background: #21262d; padding: 8px 12px; text-align: left; color: #8b949e; }
+  td { padding: 8px 12px; border-bottom: 1px solid #21262d; font-family: monospace; }
+  .celebrate {
+    background: #1a7f3722; border: 1px solid #2ea043; border-radius: 8px;
+    padding: 16px 20px; margin-top: 16px; font-size: 0.9rem; color: #3fb950; display: none;
+  }
+  .question {
+    background: #1f3a5f22; border: 1px solid #1f6feb; border-radius: 8px;
+    padding: 16px; margin: 16px 0; font-size: 0.9rem;
+  }
+  .opt-btn {
+    display: block; width: 100%; text-align: left; margin: 6px 0;
+    background: #21262d; border: 1px solid #30363d; color: #e6edf3; border-radius: 6px;
+    padding: 10px 14px; cursor: pointer; transition: all 0.2s;
+  }
+  .opt-btn:hover { border-color: #58a6ff; color: #58a6ff; }
+  .opt-btn.correct { background: #1a7f37; border-color: #2ea043; color: #3fb950; }
+  .opt-btn.wrong { background: #da363322; border-color: #f85149; color: #ff7b72; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .heat-cell {
+    width: 70px; height: 70px; display: flex; align-items: center; justify-content: center;
+    font-size: 0.85rem; font-weight: 700; border-radius: 4px; cursor: pointer;
+    transition: transform 0.1s;
+  }
+  .heat-cell:hover { transform: scale(1.05); }
+  .heat-grid { display: flex; flex-direction: column; gap: 4px; }
+  .heat-row { display: flex; gap: 4px; }
+</style>
+</head>
+<body>
+
+<header>
+  <a href="../../index.html">← Back to Arena</a>
+  <div>
+    <div style="font-size:0.75rem;color:#8b949e;text-transform:uppercase;letter-spacing:1px;">Week 3</div>
+    <h1>🕵️ Data Detective Game</h1>
+  </div>
+</header>
+
+<div class="level-bar">
+  <div class="level-pill active" id="pill-1" onclick="goLevel(1)">📊 Level 1: Histogram</div>
+  <div class="level-pill locked" id="pill-2" onclick="goLevel(2)">📈 Level 2: Scatter</div>
+  <div class="level-pill locked" id="pill-3" onclick="goLevel(3)">🔥 Level 3: Heatmap</div>
+  <div style="flex:1"></div>
+  <div class="xp-bar"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
+  <div class="xp-label">XP: <strong id="xp-display">0</strong> / 300</div>
+</div>
+
+<main>
+
+<!-- ========== LEVEL 1 ========== -->
+<div id="level-1">
+  <div class="case-badge">🔎 Case File #1 — Distribution Fixer</div>
+  <h2>Level 1: Histogram Analysis</h2>
+  <p class="subtitle">
+    Your telemetry log shows API response times. Most requests are fast (5–50ms), but rare server hiccups
+    spike to 10,000ms. This <em>heavy skew</em> will wreck your model. Your job: detect and fix it.
+  </p>
+
+  <div class="panel">
+    <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+      <button onclick="showRaw()">📊 Show Raw Distribution</button>
+      <button class="secondary" onclick="showLog()" id="log-btn" disabled>🔧 Apply Log Transform</button>
+      <button class="secondary" onclick="resetL1()">↺ Reset</button>
+    </div>
+    <canvas id="hist-canvas" width="800" height="260"></canvas>
+    <div id="hist-stats" class="result-box" style="display:none;"></div>
+  </div>
+
+  <div class="panel" id="l1-question" style="display:none;">
+    <div class="question">
+      <strong>🕵️ Detective's Question:</strong> After applying the log transform, the skewness score dropped from ~4.2 to ~0.3.
+      Why does a lower skewness score help the ML model?
+    </div>
+    <button class="opt-btn" onclick="l1Answer(this, true)">A) It compresses extreme outliers so they don't dominate the loss calculation, allowing the model to learn normal patterns</button>
+    <button class="opt-btn" onclick="l1Answer(this, false)">B) It removes all the bad data from the dataset permanently</button>
+    <button class="opt-btn" onclick="l1Answer(this, false)">C) It makes the dataset smaller, which speeds up training</button>
+  </div>
+
+  <div class="celebrate" id="l1-celebrate">
+    🎉 <strong>Case Closed!</strong> +100 XP — You detected severe skew and applied np.log1p() to tame it. Your model can now learn from the data without being bullied by the 10,000ms spike.
+  </div>
+</div>
+
+<!-- ========== LEVEL 2 ========== -->
+<div id="level-2" style="display:none;">
+  <div class="case-badge">🔎 Case File #2 — Relationship Identifier</div>
+  <h2>Level 2: Scatter Plot Forensics</h2>
+  <p class="subtitle">
+    Examine 4 scatter plots. Your mission: identify which relationship is strongly linear (a simple model will work),
+    which is non-linear (needs more complex model), and which is pure noise (useless feature).
+  </p>
+
+  <div class="panel">
+    <div class="grid-2">
+      <div>
+        <canvas id="scatter-A" width="360" height="220"></canvas>
+        <div style="text-align:center;font-size:0.82rem;color:#8b949e;">Plot A: CPU Usage vs Response Time</div>
+      </div>
+      <div>
+        <canvas id="scatter-B" width="360" height="220"></canvas>
+        <div style="text-align:center;font-size:0.82rem;color:#8b949e;">Plot B: RAM Usage vs Response Time</div>
+      </div>
+      <div>
+        <canvas id="scatter-C" width="360" height="220"></canvas>
+        <div style="text-align:center;font-size:0.82rem;color:#8b949e;">Plot C: Network Packets vs Response Time</div>
+      </div>
+      <div>
+        <canvas id="scatter-D" width="360" height="220"></canvas>
+        <div style="text-align:center;font-size:0.82rem;color:#8b949e;">Plot D: Server Age (months) vs Response Time</div>
+      </div>
+    </div>
+    <div style="margin-top:20px;">
+      <button onclick="drawScatters()">📊 Generate Plots</button>
+    </div>
+  </div>
+
+  <div class="panel" id="l2-questions" style="display:none;">
+    <div class="question">
+      <strong>Q1:</strong> Which plot shows the clearest <em>linear relationship</em>? A simple linear regression will work here.
+    </div>
+    <div id="q1-opts">
+      <button class="opt-btn" onclick="l2Q1(this,'A',false)">Plot A (CPU)</button>
+      <button class="opt-btn" onclick="l2Q1(this,'B',true)">Plot B (RAM) ← strongest linear trend</button>
+      <button class="opt-btn" onclick="l2Q1(this,'C',false)">Plot C (Network)</button>
+      <button class="opt-btn" onclick="l2Q1(this,'D',false)">Plot D (Age)</button>
+    </div>
+    <div class="question" id="q2-block" style="display:none;">
+      <strong>Q2:</strong> Which plot shows <em>pure noise</em>? (No relationship — this feature should be dropped.)
+    </div>
+    <div id="q2-opts" style="display:none;">
+      <button class="opt-btn" onclick="l2Q2(this,'A',false)">Plot A (CPU)</button>
+      <button class="opt-btn" onclick="l2Q2(this,'B',false)">Plot B (RAM)</button>
+      <button class="opt-btn" onclick="l2Q2(this,'C',false)">Plot C (Network)</button>
+      <button class="opt-btn" onclick="l2Q2(this,'D',true)">Plot D (Age) ← random scatter, no trend</button>
+    </div>
+  </div>
+
+  <div class="celebrate" id="l2-celebrate">
+    🎉 <strong>Case Closed!</strong> +100 XP — Plot B (RAM) had the strongest linear trend (good for regression). Plot D (Server Age) was noise — you'd drop it before training. Plot A showed a curve, suggesting non-linearity.
+  </div>
+</div>
+
+<!-- ========== LEVEL 3 ========== -->
+<div id="level-3" style="display:none;">
+  <div class="case-badge">🔎 Case File #3 — Multicollinearity Killer</div>
+  <h2>Level 3: Correlation Heatmap Diagnostics</h2>
+  <p class="subtitle">
+    Your dataset has 5 features. The heatmap shows how correlated each pair is.
+    Cells close to ±1.0 are redundant — they're telling the same story. Find and drop them.
+  </p>
+
+  <div class="panel">
+    <div id="heat-container" style="overflow-x:auto;"></div>
+    <div class="result-box" id="heat-log" style="margin-top:16px;display:none;"></div>
+  </div>
+
+  <div class="panel" id="l3-drop-panel" style="display:none;">
+    <h3 style="margin-bottom:12px;">🗑️ Drop Redundant Features</h3>
+    <p style="font-size:0.85rem;color:#8b949e;margin-bottom:16px;">
+      Click the feature you should drop to resolve the multicollinearity (correlation > 0.90).
+    </p>
+    <div id="drop-opts" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
+    <div id="drop-result" class="result-box" style="display:none;margin-top:14px;"></div>
+  </div>
+
+  <div class="celebrate" id="l3-celebrate">
+    🎉 <strong>All Cases Solved!</strong> +100 XP — RAM_MB and RAM_GB carry identical information (r=0.98). You dropped RAM_MB (less human-readable) and kept RAM_GB. Your model's weights will now be stable.
+    <br><br>
+    🏆 <strong>Phase 1 Week 3 Complete!</strong> You've mastered log transforms, scatter forensics, and multicollinearity detection. Ready for Week 4 — the Capstone Pipeline!
+    <br><br>
+    <a href="../week4/index.html" style="color:#58a6ff;">→ Go to Week 4 Capstone</a>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ============ XP / LEVEL SYSTEM ============
+let xp = 0, currentLevel = 1, unlockedLevels = new Set([1]);
+
+function addXP(amount) {
+  xp = Math.min(300, xp + amount);
+  document.getElementById('xp-display').textContent = xp;
+  document.getElementById('xp-fill').style.width = (xp / 300 * 100) + '%';
+}
+
+function goLevel(n) {
+  if (!unlockedLevels.has(n)) return;
+  currentLevel = n;
+  [1,2,3].forEach(i => {
+    document.getElementById('level-' + i).style.display = i === n ? 'block' : 'none';
+    const pill = document.getElementById('pill-' + i);
+    if (i === n) pill.className = 'level-pill active';
+    else if (unlockedLevels.has(i)) pill.className = 'level-pill done';
+    else pill.className = 'level-pill locked';
+  });
+  if (n === 2 && !scattersDrawn) { setTimeout(drawScatters, 100); }
+  if (n === 3) { setTimeout(drawHeatmap, 100); }
+}
+
+function unlockLevel(n) {
+  unlockedLevels.add(n);
+  document.getElementById('pill-' + n).className = 'level-pill done';
+}
+
+// ============ LEVEL 1: HISTOGRAM ============
+let rawShown = false;
+const latencies = generateLatencies();
+
+function generateLatencies() {
+  const arr = [];
+  for (let i = 0; i < 200; i++) {
+    const base = Math.random();
+    if (base < 0.92) arr.push(5 + Math.random() * 95);       // normal: 5–100ms
+    else if (base < 0.98) arr.push(200 + Math.random() * 500); // slow: 200–700ms
+    else arr.push(2000 + Math.random() * 8000);               // spike: 2k–10k ms
+  }
+  return arr;
+}
+
+function skewness(arr) {
+  const n = arr.length;
+  const mean = arr.reduce((a,b)=>a+b)/n;
+  const std = Math.sqrt(arr.reduce((s,x)=>s+(x-mean)**2,0)/n);
+  return arr.reduce((s,x)=>s+((x-mean)/std)**3,0)/n;
+}
+
+function showRaw() {
+  rawShown = true;
+  document.getElementById('log-btn').disabled = false;
+  drawHistogram('hist-canvas', latencies, '#ff7b72', 'Raw API Latency (ms)', false);
+  const sk = skewness(latencies).toFixed(2);
+  document.getElementById('hist-stats').style.display = 'block';
+  document.getElementById('hist-stats').innerHTML =
+    `<span class="red">⚠️ Raw distribution detected</span>\n` +
+    `  Skewness score:  <span class="red">${sk}  (>1 = severe right skew)</span>\n` +
+    `  Min: ${Math.min(...latencies).toFixed(0)}ms   Max: ${Math.max(...latencies).toFixed(0)}ms\n` +
+    `  Most data crammed in 0–100ms, one spike at ~10,000ms\n\n` +
+    `  Next step: apply np.log1p() to compress the long tail`;
+}
+
+function showLog() {
+  const logL = latencies.map(x => Math.log1p(x));
+  drawHistogram('hist-canvas', logL, '#3fb950', 'Log-Transformed Latency — ln(ms+1)', true);
+  const sk = skewness(logL).toFixed(2);
+  document.getElementById('hist-stats').style.display = 'block';
+  document.getElementById('hist-stats').innerHTML =
+    `<span class="green">✓ Log transform applied: y = ln(latency + 1)</span>\n` +
+    `  Skewness score:  <span class="green">${sk}  (near 0 = symmetric ✓)</span>\n\n` +
+    `  Before: ${skewness(latencies).toFixed(2)}  →  After: ${sk}\n` +
+    `  The 10,000ms spike is now compressed to ${Math.log1p(10000).toFixed(2)}\n` +
+    `  Normal 15ms requests now at ${Math.log1p(15).toFixed(2)} — clearly distinguishable\n\n` +
+    `  Python code: df['Log_Latency'] = np.log1p(df['API_Latency_ms'])`;
+  document.getElementById('l1-question').style.display = 'block';
+}
+
+function drawHistogram(canvasId, data, color, label, smooth) {
+  const canvas = document.getElementById(canvasId);
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth || 800; canvas.width = W; canvas.height = 260;
+  const H = 260, padL = 55, padR = 20, padT = 30, padB = 45;
+
+  ctx.fillStyle = '#0d1117'; ctx.fillRect(0, 0, W, H);
+
+  const bins = 30;
+  const min_ = Math.min(...data), max_ = Math.max(...data);
+  const bw = (max_ - min_) / bins;
+  const counts = new Array(bins).fill(0);
+  data.forEach(v => {
+    const b = Math.min(bins-1, Math.floor((v-min_)/bw));
+    counts[b]++;
+  });
+  const maxCount = Math.max(...counts);
+
+  const bw_px = (W - padL - padR) / bins;
+
+  // Bars
+  counts.forEach((c, i) => {
+    const h = (c / maxCount) * (H - padT - padB);
+    const x = padL + i * bw_px;
+    const y = H - padB - h;
+    ctx.fillStyle = color + '88';
+    ctx.fillRect(x+1, y, bw_px-2, h);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x+1, y, bw_px-2, h);
+  });
+
+  // KDE curve
+  if (smooth) {
+    ctx.beginPath(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+    for (let px = 0; px < W - padL - padR; px++) {
+      const x = min_ + px / (W - padL - padR) * (max_ - min_);
+      const kde = data.reduce((s, d) => s + Math.exp(-0.5*((x-d)/0.4)**2), 0);
+      const y = H - padB - (kde / data.length * 60) * (H - padT - padB) / maxCount;
+      px === 0 ? ctx.moveTo(padL + px, y) : ctx.lineTo(padL + px, y);
+    }
+    ctx.stroke();
+  }
+
+  // Axes
+  ctx.strokeStyle = '#30363d'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(padL, padT); ctx.lineTo(padL, H-padB); ctx.lineTo(W-padR, H-padB); ctx.stroke();
+
+  // X ticks
+  ctx.fillStyle = '#484f58'; ctx.font = '10px monospace'; ctx.textAlign = 'center';
+  for (let i = 0; i <= 5; i++) {
+    const v = min_ + i/5*(max_-min_);
+    const x = padL + i/5*(W-padL-padR);
+    ctx.fillText(smooth ? v.toFixed(1) : (v > 1000 ? (v/1000).toFixed(1)+'k' : v.toFixed(0)), x, H-padB+14);
+  }
+
+  ctx.fillStyle = '#8b949e'; ctx.font = '11px sans-serif';
+  ctx.fillText(label, padL + (W-padL-padR)/2, H - 5);
+
+  // Y label
+  ctx.save(); ctx.translate(14, H/2); ctx.rotate(-Math.PI/2);
+  ctx.fillText('Count', 0, 0); ctx.restore();
+}
+
+function l1Answer(btn, correct) {
+  document.querySelectorAll('#l1-question .opt-btn').forEach(b => b.disabled = true);
+  btn.className = 'opt-btn ' + (correct ? 'correct' : 'wrong');
+  if (!correct) {
+    document.querySelectorAll('#l1-question .opt-btn')[0].className = 'opt-btn correct';
+  }
+  if (correct) {
+    addXP(100);
+    document.getElementById('l1-celebrate').style.display = 'block';
+    unlockLevel(2);
+    setTimeout(() => goLevel(2), 2000);
+  }
+}
+
+function resetL1() {
+  rawShown = false;
+  document.getElementById('log-btn').disabled = true;
+  document.getElementById('hist-stats').style.display = 'none';
+  document.getElementById('l1-question').style.display = 'none';
+  document.getElementById('l1-celebrate').style.display = 'none';
+  const canvas = document.getElementById('hist-canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#0d1117'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#484f58'; ctx.font = '14px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('Click "Show Raw Distribution" to begin', canvas.width/2, canvas.height/2);
+}
+
+// ============ LEVEL 2: SCATTER ============
+let scattersDrawn = false;
+
+function seededRand(seed) {
+  let s = seed;
+  return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+}
+
+function drawScatter(canvasId, genFn, color, title) {
+  const canvas = document.getElementById(canvasId);
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth || 360; canvas.width = W; canvas.height = 220;
+  const H = 220, padL = 40, padR = 15, padT = 20, padB = 35;
+  ctx.fillStyle = '#0d1117'; ctx.fillRect(0, 0, W, H);
+
+  const pts = genFn(W, H, padL, padR, padT, padB);
+
+  // Regression line
+  const xs = pts.map(p=>p.x), ys = pts.map(p=>p.y);
+  const n = xs.length;
+  const mx = xs.reduce((a,b)=>a+b)/n, my = ys.reduce((a,b)=>a+b)/n;
+  const slope = xs.reduce((s,x,i)=>s+(x-mx)*(ys[i]-my),0)/xs.reduce((s,x)=>s+(x-mx)**2,0);
+  const inter = my - slope*mx;
+  ctx.beginPath(); ctx.strokeStyle = '#ffffff33'; ctx.lineWidth = 1.5; ctx.setLineDash([4,4]);
+  ctx.moveTo(padL, inter + slope*padL);
+  ctx.lineTo(W-padR, inter + slope*(W-padR));
+  ctx.stroke(); ctx.setLineDash([]);
+
+  // Dots
+  pts.forEach(p => {
+    ctx.beginPath();
+    ctx.fillStyle = color + 'cc';
+    ctx.arc(p.sx, p.sy, 4, 0, Math.PI*2);
+    ctx.fill();
+  });
+
+  // Axes
+  ctx.strokeStyle = '#30363d'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(padL, padT); ctx.lineTo(padL, H-padB); ctx.lineTo(W-padR, H-padB); ctx.stroke();
+  ctx.fillStyle = '#484f58'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+}
+
+function drawScatters() {
+  scattersDrawn = true;
+  const rand = seededRand(42);
+
+  // Plot A: CPU — moderate linear with noise
+  drawScatter('scatter-A', (W,H,pL,pR,pT,pB) => {
+    const pts = [];
+    for (let i=0;i<60;i++) {
+      const cpu = 10 + rand()*80;
+      const resp = 20 + cpu*1.8 + (rand()-0.5)*80;
+      const sx = pL + (cpu/100)*(W-pL-pR);
+      const sy = H - pB - (Math.max(0,Math.min(resp,200))/200)*(H-pT-pB);
+      pts.push({x:sx, y:sy, sx, sy});
+    }
+    return pts;
+  }, '#58a6ff', 'CPU');
+
+  // Plot B: RAM — strong linear
+  drawScatter('scatter-B', (W,H,pL,pR,pT,pB) => {
+    const pts = [];
+    for (let i=0;i<60;i++) {
+      const ram = 10 + rand()*80;
+      const resp = 15 + ram*2.1 + (rand()-0.5)*20;
+      const sx = pL + (ram/100)*(W-pL-pR);
+      const sy = H - pB - (Math.max(0,Math.min(resp,200))/200)*(H-pT-pB);
+      pts.push({x:sx, y:sy, sx, sy});
+    }
+    return pts;
+  }, '#3fb950', 'RAM');
+
+  // Plot C: Network — curved/non-linear
+  drawScatter('scatter-C', (W,H,pL,pR,pT,pB) => {
+    const pts = [];
+    for (let i=0;i<60;i++) {
+      const net = rand()*100;
+      const resp = 5 + net**1.5 * 0.12 + (rand()-0.5)*30;
+      const sx = pL + (net/100)*(W-pL-pR);
+      const sy = H - pB - (Math.max(0,Math.min(resp,200))/200)*(H-pT-pB);
+      pts.push({x:sx, y:sy, sx, sy});
+    }
+    return pts;
+  }, '#d29922', 'Net');
+
+  // Plot D: Age — pure noise
+  drawScatter('scatter-D', (W,H,pL,pR,pT,pB) => {
+    const pts = [];
+    for (let i=0;i<60;i++) {
+      const age = rand()*100;
+      const resp = 30 + rand()*140;
+      const sx = pL + (age/100)*(W-pL-pR);
+      const sy = H - pB - (resp/200)*(H-pT-pB);
+      pts.push({x:sx, y:sy, sx, sy});
+    }
+    return pts;
+  }, '#bc8cff', 'Age');
+
+  document.getElementById('l2-questions').style.display = 'block';
+}
+
+let l2q1done = false;
+function l2Q1(btn, ans, correct) {
+  if (l2q1done) return;
+  l2q1done = true;
+  document.querySelectorAll('#q1-opts .opt-btn').forEach(b => b.disabled = true);
+  btn.className = 'opt-btn ' + (correct ? 'correct' : 'wrong');
+  if (!correct) document.querySelectorAll('#q1-opts .opt-btn')[1].className = 'opt-btn correct';
+  setTimeout(() => {
+    document.getElementById('q2-block').style.display = 'block';
+    document.getElementById('q2-opts').style.display = 'block';
+  }, 600);
+}
+
+let l2q2done = false;
+function l2Q2(btn, ans, correct) {
+  if (l2q2done) return;
+  l2q2done = true;
+  document.querySelectorAll('#q2-opts .opt-btn').forEach(b => b.disabled = true);
+  btn.className = 'opt-btn ' + (correct ? 'correct' : 'wrong');
+  if (!correct) document.querySelectorAll('#q2-opts .opt-btn')[3].className = 'opt-btn correct';
+  addXP(100);
+  document.getElementById('l2-celebrate').style.display = 'block';
+  unlockLevel(3);
+  setTimeout(() => goLevel(3), 2200);
+}
+
+// ============ LEVEL 3: HEATMAP ============
+const features = ['CPU_Usage', 'RAM_GB', 'RAM_MB', 'API_Latency', 'Network_IO'];
+const corrMatrix = [
+  [1.00, 0.45, 0.44,  0.82,  0.31],
+  [0.45, 1.00, 0.98,  0.37,  0.22],
+  [0.44, 0.98, 1.00,  0.36,  0.21],
+  [0.82, 0.37, 0.36,  1.00,  0.19],
+  [0.31, 0.22, 0.21,  0.19,  1.00],
+];
+
+function heatColor(v) {
+  // v in [-1, 1] → red to blue through white
+  if (v > 0.9) return ['#8b0000', '#ff4444'];  // very high positive — redundant
+  if (v > 0.7) return ['#7a3300', '#ff9944'];
+  if (v > 0.4) return ['#2a3a1a', '#6ab04c'];
+  if (v > 0) return ['#1a2a2a', '#3fb98044'];
+  return ['#1a1a3a', '#4444aa'];
+}
+
+function drawHeatmap() {
+  const container = document.getElementById('heat-container');
+  const n = features.length;
+
+  let html = '<table style="border-collapse:separate;border-spacing:4px;">';
+  // Header row
+  html += '<tr><th style="background:transparent;min-width:110px;"></th>';
+  features.forEach(f => {
+    html += `<th style="background:#21262d;padding:6px 4px;font-size:0.72rem;color:#8b949e;text-align:center;min-width:80px;border-radius:4px;">${f}</th>`;
+  });
+  html += '</tr>';
+
+  corrMatrix.forEach((row, i) => {
+    html += `<tr><td style="background:#21262d;padding:6px 10px;font-size:0.78rem;color:#8b949e;border-radius:4px;white-space:nowrap;">${features[i]}</td>`;
+    row.forEach((v, j) => {
+      const [bg, text] = heatColor(v);
+      const bold = (i === 1 && j === 2) || (i === 2 && j === 1);
+      html += `<td class="heat-cell" style="background:${bg};color:${text};${bold?'border:2px solid #ff7b72;font-size:1rem;':''}"
+               title="${features[i]} vs ${features[j]}: r=${v.toFixed(2)}">${v.toFixed(2)}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</table>';
+  container.innerHTML = html;
+
+  const log = document.getElementById('heat-log');
+  log.style.display = 'block';
+  log.innerHTML =
+    `<span class="yellow">🔍 Inspecting correlation matrix for multicollinearity (r > 0.90)...</span>\n\n` +
+    `  CPU_Usage   ↔ API_Latency:  <span class="yellow">r=0.82</span>  (high but acceptable)\n` +
+    `  RAM_GB      ↔ RAM_MB:       <span class="red">r=0.98  ← ⚠️ Redundant! Near-perfect correlation</span>\n\n` +
+    `  These two columns carry identical information. One must be dropped.`;
+
+  document.getElementById('l3-drop-panel').style.display = 'block';
+
+  const dropDiv = document.getElementById('drop-opts');
+  dropDiv.innerHTML = '';
+  features.forEach(f => {
+    const btn = document.createElement('button');
+    btn.textContent = f;
+    btn.className = 'secondary';
+    btn.onclick = () => l3Drop(f);
+    dropDiv.appendChild(btn);
+  });
+}
+
+function l3Drop(feature) {
+  const result = document.getElementById('drop-result');
+  result.style.display = 'block';
+  if (feature === 'RAM_MB') {
+    result.innerHTML =
+      `<span class="green">✓ Correct! Dropped RAM_MB (less readable unit).</span>\n` +
+      `  RAM_GB is kept — same data, human-friendly scale.\n\n` +
+      `  Python: df = df.drop(columns=['RAM_MB'])\n\n` +
+      `  Remaining features: CPU_Usage, RAM_GB, API_Latency, Network_IO\n` +
+      `  Multicollinearity resolved. Model weights will now be stable. ✓`;
+    addXP(100);
+    document.getElementById('l3-celebrate').style.display = 'block';
+    document.querySelectorAll('#drop-opts button').forEach(b => b.disabled = true);
+  } else if (feature === 'RAM_GB') {
+    result.innerHTML =
+      `<span class="yellow">⚠️ Technically valid but suboptimal. RAM_GB is kept → RAM_MB is the better drop.</span>\n` +
+      `  RAM_GB is more human-readable. Try again — drop RAM_MB instead.`;
+    addXP(50);
+  } else {
+    result.innerHTML =
+      `<span class="red">✗ Wrong feature. ${feature} doesn't have a high correlation with another feature.</span>\n` +
+      `  Hint: Look for the red cell — r=0.98 between RAM_GB and RAM_MB.`;
+  }
+}
+
+// Init
+setTimeout(() => {
+  resetL1();
+  drawScatters();
+}, 100);
+</script>
+</body>
+</html>

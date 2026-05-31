@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 4 — Phase 1 Capstone Pipeline</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0d1117; color: #e6edf3; }
+  header {
+    background: #161b22; border-bottom: 1px solid #30363d;
+    padding: 16px 40px; display: flex; align-items: center; gap: 16px;
+  }
+  header a { color: #58a6ff; text-decoration: none; font-size: 0.9rem; }
+  main { max-width: 1080px; margin: 0 auto; padding: 32px 40px; }
+  .panel { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 24px; margin-bottom: 24px; }
+  h2 { font-size: 1.4rem; margin-bottom: 8px; }
+  h3 { font-size: 1rem; margin-bottom: 12px; }
+  .subtitle { color: #8b949e; font-size: 0.9rem; line-height: 1.7; margin-bottom: 24px; }
+  .stage-row { display: flex; gap: 8px; margin-bottom: 28px; flex-wrap: wrap; }
+  .stage-btn {
+    padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 700;
+    border: 2px solid #30363d; background: #21262d; color: #8b949e; transition: all 0.2s;
+  }
+  .stage-btn.done { border-color: #2ea043; background: #1a7f3733; color: #3fb950; }
+  .stage-btn.active { border-color: #58a6ff; background: #1f3a5f33; color: #58a6ff; }
+  .stage-btn.locked { opacity: 0.4; cursor: not-allowed; }
+  .terminal {
+    background: #010409; border: 1px solid #30363d; border-radius: 8px;
+    padding: 20px; font-family: monospace; font-size: 0.88rem; line-height: 2;
+    min-height: 140px; max-height: 300px; overflow-y: auto;
+  }
+  .t-green { color: #3fb950; }
+  .t-blue { color: #79c0ff; }
+  .t-yellow { color: #d29922; }
+  .t-red { color: #ff7b72; }
+  .t-dim { color: #484f58; }
+  .t-white { color: #e6edf3; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  th { background: #21262d; padding: 8px 12px; text-align: right; color: #8b949e; }
+  th:first-child { text-align: left; }
+  td { padding: 8px 12px; border-bottom: 1px solid #21262d; font-family: monospace; text-align: right; }
+  td:first-child { text-align: left; color: #8b949e; }
+  .nan-cell { color: #ff7b72; font-style: italic; }
+  .imputed-cell { color: #3fb950; font-weight: bold; }
+  .dropped-cell { color: #484f58; text-decoration: line-through; }
+  .highlight-cell { color: #d29922; }
+  .scaled-cell { color: #58a6ff; }
+  button {
+    padding: 10px 22px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 700;
+    border: 1px solid #2ea043; background: #238636; color: #fff; transition: background 0.2s; margin: 4px;
+  }
+  button:hover { background: #2ea043; }
+  button.secondary { background: #21262d; border-color: #30363d; color: #e6edf3; }
+  button.secondary:hover { background: #30363d; }
+  canvas { border-radius: 8px; display: block; margin: 12px 0; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .stat-box { background: #21262d; border-radius: 6px; padding: 12px 16px; }
+  .stat-label { font-size: 0.78rem; color: #8b949e; }
+  .stat-val { font-size: 1.3rem; font-weight: 800; font-family: monospace; }
+  .quiz-section { margin-top: 32px; }
+  .quiz-q { background: #1f3a5f22; border: 1px solid #1f6feb; border-radius: 8px; padding: 16px; margin: 14px 0; }
+  .quiz-opt {
+    display: block; width: 100%; text-align: left; margin: 6px 0; padding: 10px 14px;
+    background: #21262d; border: 1px solid #30363d; border-radius: 6px; cursor: pointer;
+    color: #e6edf3; transition: all 0.2s;
+  }
+  .quiz-opt:hover { border-color: #58a6ff; color: #58a6ff; }
+  .quiz-opt.correct { background: #1a7f37; border-color: #2ea043; color: #3fb950; }
+  .quiz-opt.wrong { background: #da363322; border-color: #f85149; color: #ff7b72; }
+  .graduation {
+    background: linear-gradient(135deg, #1a7f3722, #1f3a5f22);
+    border: 1px solid #2ea043; border-radius: 12px; padding: 32px;
+    text-align: center; margin-top: 24px; display: none;
+  }
+  .graduation h2 { font-size: 2rem; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+
+<header>
+  <a href="../../index.html">← Back to Arena</a>
+  <div>
+    <div style="font-size:0.75rem;color:#8b949e;text-transform:uppercase;letter-spacing:1px;">Week 4 · Capstone</div>
+    <h1>🚀 Phase 1 Capstone Pipeline</h1>
+  </div>
+</header>
+
+<main>
+  <p class="subtitle" style="margin-bottom:28px;">
+    You are a Data Engineer at a SaaS company. The DevOps team handed you a raw, messy <code>cluster_telemetry.csv</code>.
+    Run it through the 4-stage preprocessing pipeline before feeding it to an ML model.
+  </p>
+
+  <div class="stage-row">
+    <div class="stage-btn active" id="sbtn-0" onclick="goStage(0)">🚀 Start</div>
+    <div class="stage-btn locked" id="sbtn-1" onclick="goStage(1)">Stage 1 — Imputation</div>
+    <div class="stage-btn locked" id="sbtn-2" onclick="goStage(2)">Stage 2 — Log Transform</div>
+    <div class="stage-btn locked" id="sbtn-3" onclick="goStage(3)">Stage 3 — Correlation</div>
+    <div class="stage-btn locked" id="sbtn-4" onclick="goStage(4)">Stage 4 — Scaling</div>
+    <div class="stage-btn locked" id="sbtn-5" onclick="goStage(5)">🎓 Quiz</div>
+  </div>
+
+  <div class="panel">
+    <div class="terminal" id="terminal"></div>
+  </div>
+
+  <div id="stage-content"></div>
+
+  <div class="graduation" id="graduation">
+    <h2>🎓 Phase 1 Complete!</h2>
+    <p style="color:#8b949e;font-size:1rem;max-width:500px;margin:0 auto 20px;">
+      You've mastered the full data preprocessing pipeline: imputation, log transforms, correlation pruning, and feature scaling.
+      Your data is now clean, balanced, and ready for machine learning models.
+    </p>
+    <p style="color:#3fb950;font-size:1rem;">✓ NumPy &amp; vectorization · ✓ Pandas wrangling · ✓ Gradient descent · ✓ Feature scaling · ✓ EDA · ✓ Preprocessing pipeline</p>
+    <br>
+    <p style="color:#8b949e;">
+      <strong style="color:#e6edf3">Next: Phase 2</strong> — Core ML Algorithms (Linear &amp; Logistic Regression, Scikit-Learn)
+    </p>
+    <br>
+    <a href="../../index.html" style="color:#58a6ff;font-size:0.95rem;">← Back to Arena</a>
+  </div>
+</main>
+
+<script>
+// ============ DATA GENERATION ============
+const SEED = 42;
+function seeded(seed) { let s=seed; return ()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;}; }
+const rand = seeded(SEED);
+
+const N = 12;
+const rawTable = [];
+for (let i = 0; i < N; i++) {
+  const containers = (rand() < 0.08) ? null : Math.round(5 + rand()*45);
+  const exp = Math.random(); // use Math.random for variety
+  const rawLat = Math.pow(10 + rand()*90, 1.8) + 10;
+  const latency = (rand() < 0.08) ? null : parseFloat(rawLat.toFixed(1));
+  const gb = parseFloat((containers || 22) * (2 + rand()*2)).toFixed(2);
+  const mb = parseFloat((+gb * 1024 + (rand()-0.5)*10).toFixed(0));
+  rawTable.push({ Containers_Active: containers, API_Latency_ms: latency, RAM_GB: +gb, RAM_MB: mb });
+}
+
+const medContainers = computeMedian(rawTable.filter(r=>r.Containers_Active!==null).map(r=>r.Containers_Active));
+const medLatency = computeMedian(rawTable.filter(r=>r.API_Latency_ms!==null).map(r=>r.API_Latency_ms));
+
+function computeMedian(arr) {
+  const s = [...arr].sort((a,b)=>a-b);
+  return s.length%2===0 ? (s[s.length/2-1]+s[s.length/2])/2 : s[Math.floor(s.length/2)];
+}
+
+function computeMean(arr) { return arr.reduce((a,b)=>a+b)/arr.length; }
+function computeStd(arr) {
+  const m = computeMean(arr);
+  return Math.sqrt(arr.reduce((s,x)=>s+(x-m)**2,0)/arr.length);
+}
+
+function skewness(arr) {
+  const n = arr.length, m = computeMean(arr), s = computeStd(arr);
+  return arr.reduce((sum,x)=>sum+((x-m)/s)**3,0)/n;
+}
+
+// ============ TERMINAL ============
+let termLines = [];
+function term(html) {
+  termLines.push(html);
+  document.getElementById('terminal').innerHTML = termLines.map(l=>`<div>${l}</div>`).join('');
+  document.getElementById('terminal').scrollTop = 9999;
+}
+function termClear() { termLines = []; document.getElementById('terminal').innerHTML = ''; }
+
+// ============ STAGE SYSTEM ============
+let currentStage = 0, unlockedStages = new Set([0]);
+
+function goStage(n) {
+  if (!unlockedStages.has(n)) return;
+  currentStage = n;
+  [0,1,2,3,4,5].forEach(i => {
+    const btn = document.getElementById('sbtn-'+i);
+    if (i===n) btn.className='stage-btn active';
+    else if(unlockedStages.has(i) && i<n) btn.className='stage-btn done';
+    else if(unlockedStages.has(i)) btn.className='stage-btn active';
+    else btn.className='stage-btn locked';
+  });
+  if (n===0) renderStart();
+  else if (n===1) renderStage1();
+  else if (n===2) renderStage2();
+  else if (n===3) renderStage3();
+  else if (n===4) renderStage4();
+  else if (n===5) renderQuiz();
+}
+
+function unlock(n) { unlockedStages.add(n); document.getElementById('sbtn-'+n).className='stage-btn active'; }
+
+// ============ STAGE 0: START ============
+function renderStart() {
+  termClear();
+  term(`<span class="t-dim">$ python phase1_capstone.py</span>`);
+  term(`<span class="t-yellow">⏳ Simulating raw database dump (cluster_telemetry.csv)...</span>`);
+  setTimeout(() => {
+    term(`<span class="t-green">✓ Dataset loaded: ${N} rows, 4 columns</span>`);
+    term(`<span class="t-dim">   Columns: Containers_Active, API_Latency_ms, RAM_GB, RAM_MB</span>`);
+  }, 600);
+
+  const nullC = rawTable.filter(r=>r.Containers_Active===null).length;
+  const nullL = rawTable.filter(r=>r.API_Latency_ms===null).length;
+  document.getElementById('stage-content').innerHTML = `
+    <div class="panel">
+      <h3>📋 Raw Dataset (cluster_telemetry.csv)</h3>
+      <div style="overflow-x:auto;">
+        ${rawTableHTML(rawTable)}
+      </div>
+      <div style="display:flex;gap:16px;margin-top:16px;flex-wrap:wrap;">
+        <div class="stat-box"><div class="stat-label">Rows</div><div class="stat-val" style="color:#58a6ff;">${N}</div></div>
+        <div class="stat-box"><div class="stat-label">Columns</div><div class="stat-val" style="color:#58a6ff;">4</div></div>
+        <div class="stat-box"><div class="stat-label">Missing (Containers)</div><div class="stat-val" style="color:#ff7b72;">${nullC}</div></div>
+        <div class="stat-box"><div class="stat-label">Missing (Latency)</div><div class="stat-val" style="color:#ff7b72;">${nullL}</div></div>
+      </div>
+      <div style="margin-top:20px;">
+        <button onclick="unlock(1);goStage(1);">▶ Run Stage 1 — Fix Missing Values</button>
+      </div>
+    </div>`;
+}
+
+function rawTableHTML(data) {
+  const rows = data.map(r => `<tr>
+    <td>${r.Containers_Active===null?'<span class="nan-cell">NaN</span>':r.Containers_Active}</td>
+    <td>${r.API_Latency_ms===null?'<span class="nan-cell">NaN</span>':r.API_Latency_ms.toFixed(1)}</td>
+    <td>${r.RAM_GB}</td>
+    <td>${r.RAM_MB}</td>
+  </tr>`).join('');
+  return `<table><thead><tr><th>Containers_Active</th><th>API_Latency_ms</th><th>RAM_GB</th><th>RAM_MB</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+// ============ STAGE 1: IMPUTATION ============
+let imputedTable;
+function renderStage1() {
+  termClear();
+  term(`<span class="t-dim">--- STAGE 1: Structure Audit ---</span>`);
+  setTimeout(()=>term(`<span class="t-blue">📊 Raw Dataset Dimensions: ${N} rows, 4 columns</span>`), 300);
+  setTimeout(()=>term(`<span class="t-blue">🔍 Missing Value Footprint:</span>`), 600);
+  const nullC = rawTable.filter(r=>r.Containers_Active===null).length;
+  const nullL = rawTable.filter(r=>r.API_Latency_ms===null).length;
+  setTimeout(()=>term(`<span class="t-white">   Containers_Active: <span class="t-red">${nullC} missing</span></span>`), 900);
+  setTimeout(()=>term(`<span class="t-white">   API_Latency_ms:    <span class="t-red">${nullL} missing</span></span>`), 1100);
+  setTimeout(()=>term(`<span class="t-yellow">   Median (Containers): ${medContainers.toFixed(1)} | Median (Latency): ${medLatency.toFixed(1)}</span>`), 1400);
+  setTimeout(()=>term(`<span class="t-green">✅ Missing data fixed via Median Imputation.</span>`), 1800);
+
+  imputedTable = rawTable.map(r => ({
+    ...r,
+    Containers_Active: r.Containers_Active === null ? medContainers : r.Containers_Active,
+    API_Latency_ms: r.API_Latency_ms === null ? medLatency : r.API_Latency_ms,
+    _impC: r.Containers_Active === null,
+    _impL: r.API_Latency_ms === null,
+  }));
+
+  const impRows = imputedTable.map(r => `<tr>
+    <td>${r._impC?`<span class="imputed-cell">${r.Containers_Active.toFixed(1)} ★</span>`:r.Containers_Active}</td>
+    <td>${r._impL?`<span class="imputed-cell">${r.API_Latency_ms.toFixed(1)} ★</span>`:r.API_Latency_ms.toFixed(1)}</td>
+    <td>${r.RAM_GB}</td>
+    <td>${r.RAM_MB}</td>
+  </tr>`).join('');
+
+  document.getElementById('stage-content').innerHTML = `
+    <div class="panel">
+      <h3>Stage 1 — Before vs After Median Imputation</h3>
+      <p style="font-size:0.85rem;color:#3fb950;margin-bottom:14px;">★ = imputed values (filled with column median)</p>
+      <div style="overflow-x:auto;">
+        <table><thead><tr><th>Containers_Active</th><th>API_Latency_ms</th><th>RAM_GB</th><th>RAM_MB</th></tr></thead>
+        <tbody>${impRows}</tbody></table>
+      </div>
+      <div style="margin-top:20px;font-size:0.85rem;color:#8b949e;background:#0d1117;border-radius:6px;padding:14px;font-family:monospace;line-height:2;">
+        <span style="color:#79c0ff">median_containers</span> = df['Containers_Active'].median()  → ${medContainers.toFixed(1)}<br>
+        <span style="color:#79c0ff">median_latency</span>    = df['API_Latency_ms'].median()    → ${medLatency.toFixed(1)}<br>
+        df['Containers_Active'] = df['Containers_Active'].<span style="color:#3fb950">fillna(median_containers)</span><br>
+        df['API_Latency_ms']    = df['API_Latency_ms'].<span style="color:#3fb950">fillna(median_latency)</span>
+      </div>
+      <div style="margin-top:16px;">
+        <button onclick="unlock(2);goStage(2);">▶ Run Stage 2 — Fix Skewed Distribution</button>
+      </div>
+    </div>`;
+}
+
+// ============ STAGE 2: LOG TRANSFORM ============
+let logTable;
+function renderStage2() {
+  termClear();
+  term(`<span class="t-dim">--- STAGE 2: Distribution Audit ---</span>`);
+  const rawSkew = skewness(imputedTable.map(r=>r.API_Latency_ms));
+  setTimeout(()=>term(`<span class="t-red">📈 Raw Latency Skewness Score: ${rawSkew.toFixed(2)}  (>1 = high skew)</span>`), 300);
+  setTimeout(()=>term(`<span class="t-yellow">   Applying log1p transform: y = ln(x + 1)</span>`), 700);
+
+  logTable = imputedTable.map(r => ({
+    ...r,
+    Log_API_Latency: Math.log1p(r.API_Latency_ms),
+  }));
+  delete logTable; // reassign
+  logTable = imputedTable.map(r => ({
+    Containers_Active: r.Containers_Active,
+    Log_API_Latency: Math.log1p(r.API_Latency_ms),
+    RAM_GB: r.RAM_GB,
+    RAM_MB: r.RAM_MB,
+    _rawLat: r.API_Latency_ms,
+  }));
+
+  const logSkew = skewness(logTable.map(r=>r.Log_API_Latency));
+  setTimeout(()=>term(`<span class="t-green">📉 Transformed Skewness Score: ${logSkew.toFixed(2)}  (near 0 = symmetric ✓)</span>`), 1100);
+  setTimeout(()=>term(`<span class="t-green">✅ High skew resolved using log1p transform.</span>`), 1500);
+
+  document.getElementById('stage-content').innerHTML = `
+    <div class="panel">
+      <h3>Stage 2 — API_Latency_ms Before vs After Log Transform</h3>
+      <div class="grid-2">
+        <div>
+          <p style="font-size:0.82rem;color:#ff7b72;margin-bottom:8px;">Before — Raw Latency (skewed)</p>
+          <canvas id="s2-raw" width="400" height="180"></canvas>
+          <div class="stat-box" style="margin-top:8px;">
+            <div class="stat-label">Skewness</div>
+            <div class="stat-val" style="color:#ff7b72;">${rawSkew.toFixed(2)}</div>
+          </div>
+        </div>
+        <div>
+          <p style="font-size:0.82rem;color:#3fb950;margin-bottom:8px;">After — Log Transformed (symmetric)</p>
+          <canvas id="s2-log" width="400" height="180"></canvas>
+          <div class="stat-box" style="margin-top:8px;">
+            <div class="stat-label">Skewness</div>
+            <div class="stat-val" style="color:#3fb950;">${logSkew.toFixed(2)}</div>
+          </div>
+        </div>
+      </div>
+      <div style="overflow-x:auto;margin-top:16px;">
+        <table><thead><tr><th>Containers_Active</th><th>API_Latency_ms (raw)</th><th>→</th><th>Log_API_Latency</th><th>RAM_GB</th><th>RAM_MB</th></tr></thead>
+        <tbody>${logTable.map(r=>`<tr>
+          <td>${r.Containers_Active}</td>
+          <td class="highlight-cell">${r._rawLat.toFixed(1)}</td>
+          <td style="color:#8b949e">→</td>
+          <td class="imputed-cell">${r.Log_API_Latency.toFixed(4)}</td>
+          <td>${r.RAM_GB}</td>
+          <td>${r.RAM_MB}</td>
+        </tr>`).join('')}</tbody></table>
+      </div>
+      <div style="margin-top:16px;"><button onclick="unlock(3);goStage(3);">▶ Run Stage 3 — Detect Redundant Features</button></div>
+    </div>`;
+
+  setTimeout(() => {
+    drawMiniHist('s2-raw', imputedTable.map(r=>r.API_Latency_ms), '#ff7b72');
+    drawMiniHist('s2-log', logTable.map(r=>r.Log_API_Latency), '#3fb950');
+  }, 200);
+}
+
+function drawMiniHist(id, data, color) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.fillStyle = '#0d1117'; ctx.fillRect(0,0,W,H);
+  const bins = 12, min_ = Math.min(...data), max_ = Math.max(...data), bw = (max_-min_)/bins;
+  const counts = new Array(bins).fill(0);
+  data.forEach(v=>{ const b=Math.min(bins-1,Math.floor((v-min_)/bw)); counts[b]++; });
+  const mx = Math.max(...counts);
+  const pw = (W-40)/bins;
+  counts.forEach((c,i)=>{
+    const h = (c/mx)*(H-40);
+    ctx.fillStyle=color+'88';
+    ctx.fillRect(20+i*pw, H-30-h, pw-2, h);
+    ctx.strokeStyle=color; ctx.lineWidth=1;
+    ctx.strokeRect(20+i*pw, H-30-h, pw-2, h);
+  });
+  ctx.strokeStyle='#30363d'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(20,10); ctx.lineTo(20,H-30); ctx.lineTo(W-20,H-30); ctx.stroke();
+}
+
+// ============ STAGE 3: CORRELATION ============
+const corrFeatures = ['Containers', 'Log_Latency', 'RAM_GB', 'RAM_MB'];
+const corrMatrix = [
+  [1.00, 0.15, 0.88, 0.87],
+  [0.15, 1.00, 0.12, 0.11],
+  [0.88, 0.12, 1.00, 0.98],
+  [0.87, 0.11, 0.98, 1.00],
+];
+
+let prunedTable;
+function renderStage3() {
+  termClear();
+  term(`<span class="t-dim">--- STAGE 3: Redundancy Audit (Multicollinearity) ---</span>`);
+  setTimeout(()=>term(`<span class="t-blue">🔢 Computing pairwise Pearson correlation coefficients...</span>`), 400);
+  setTimeout(()=>term(`<span class="t-red">   RAM_GB ↔ RAM_MB:  r = 0.98  ← ⚠️ Multicollinearity!</span>`), 900);
+  setTimeout(()=>term(`<span class="t-green">✅ Pruned 'RAM_MB' to resolve multicollinearity.</span>`), 1400);
+
+  prunedTable = logTable.map(r => ({
+    Containers_Active: r.Containers_Active,
+    Log_API_Latency: r.Log_API_Latency,
+    RAM_GB: r.RAM_GB,
+  }));
+
+  let heatHTML = '<table style="border-collapse:separate;border-spacing:3px;">';
+  heatHTML += '<tr><th style="background:transparent;min-width:90px;"></th>';
+  corrFeatures.forEach(f => { heatHTML += `<th style="background:#21262d;padding:5px 4px;font-size:0.7rem;color:#8b949e;text-align:center;min-width:75px;border-radius:4px;">${f}</th>`; });
+  heatHTML += '</tr>';
+  corrMatrix.forEach((row,i)=>{
+    heatHTML += `<tr><td style="background:#21262d;padding:5px 8px;font-size:0.72rem;color:#8b949e;border-radius:4px;white-space:nowrap;">${corrFeatures[i]}</td>`;
+    row.forEach((v,j)=>{
+      const isRedundant = (i===2&&j===3)||(i===3&&j===2);
+      const bg = v>=0.9?'#5a0000':v>=0.7?'#3a2a00':v>=0.4?'#1a2a10':v>0?'#0d1a0d':'#0d0d1a';
+      const col = v>=0.9?'#ff4444':v>=0.7?'#ffa644':v>=0.4?'#6ab04c':'#4488cc';
+      heatHTML += `<td style="background:${bg};color:${col};text-align:center;padding:8px;border-radius:4px;font-family:monospace;font-weight:700;${isRedundant?'border:2px solid #ff7b72;':''}">${v.toFixed(2)}</td>`;
+    });
+    heatHTML += '</tr>';
+  });
+  heatHTML += '</table>';
+
+  document.getElementById('stage-content').innerHTML = `
+    <div class="panel">
+      <h3>Stage 3 — Correlation Matrix Heatmap</h3>
+      <div style="overflow-x:auto;">${heatHTML}</div>
+      <div style="margin-top:16px;background:#da363322;border:1px solid #f85149;border-radius:8px;padding:14px;font-size:0.85rem;color:#ff7b72;">
+        ⚠️ <strong>RAM_GB ↔ RAM_MB: r = 0.98</strong> — Near-perfect correlation detected. Both columns carry identical information.
+        Keeping both will create unstable weight estimates (the "twin GPS" problem).
+      </div>
+      <div style="overflow-x:auto;margin-top:16px;">
+        <p style="font-size:0.82rem;color:#8b949e;margin-bottom:8px;">After pruning RAM_MB:</p>
+        <table><thead><tr><th>Containers_Active</th><th>Log_API_Latency</th><th>RAM_GB</th><th style="color:#484f58;">RAM_MB (dropped)</th></tr></thead>
+        <tbody>${logTable.map(r=>`<tr>
+          <td>${r.Containers_Active}</td>
+          <td>${r.Log_API_Latency.toFixed(4)}</td>
+          <td>${r.RAM_GB}</td>
+          <td><span class="dropped-cell">${r.RAM_MB}</span></td>
+        </tr>`).join('')}</tbody></table>
+      </div>
+      <div style="margin-top:16px;"><button onclick="unlock(4);goStage(4);">▶ Run Stage 4 — Scale Features</button></div>
+    </div>`;
+}
+
+// ============ STAGE 4: SCALING ============
+function renderStage4() {
+  termClear();
+  term(`<span class="t-dim">--- STAGE 4: Feature Scaling (Z-Score) ---</span>`);
+  const cols = ['Containers_Active','Log_API_Latency','RAM_GB'];
+
+  const means = {}, stds = {};
+  cols.forEach(c => {
+    const vals = prunedTable.map(r=>r[c]);
+    means[c] = computeMean(vals);
+    stds[c] = computeStd(vals);
+  });
+
+  const scaledTable = prunedTable.map(r => {
+    const out = {};
+    cols.forEach(c => { out[c] = (r[c] - means[c]) / stds[c]; });
+    return out;
+  });
+
+  setTimeout(()=>term(`<span class="t-blue">   Computing mean and std for each feature...</span>`), 300);
+  cols.forEach((c,i) => {
+    setTimeout(()=>term(`<span class="t-white">   ${c}: mean=${means[c].toFixed(2)}, std=${stds[c].toFixed(2)}</span>`), 500+i*200);
+  });
+  setTimeout(()=>term(`<span class="t-yellow">   Z-score formula: z = (x − mean) / std</span>`), 1200);
+  setTimeout(()=>{
+    const allVals = scaledTable.flatMap(r=>cols.map(c=>r[c]));
+    term(`<span class="t-green">✅ Scaling complete. Range: [${Math.min(...allVals).toFixed(2)}, ${Math.max(...allVals).toFixed(2)}]</span>`);
+    term(`<span class="t-green">🚀 Final Matrix: ${N} rows × 3 cols — Ready for ML models!</span>`);
+  }, 1600);
+
+  document.getElementById('stage-content').innerHTML = `
+    <div class="panel">
+      <h3>Stage 4 — Z-Score Standardization</h3>
+      <div class="grid-2" style="margin-bottom:16px;">
+        ${cols.map(c=>`<div class="stat-box">
+          <div class="stat-label">${c}</div>
+          <div style="font-size:0.82rem;color:#8b949e;">μ = ${means[c].toFixed(2)} · σ = ${stds[c].toFixed(2)}</div>
+        </div>`).join('')}
+      </div>
+      <div style="overflow-x:auto;">
+        <p style="font-size:0.82rem;color:#58a6ff;margin-bottom:8px;">Final scaled output (all features on same scale ~[-2, +2]):</p>
+        <table><thead><tr>
+          <th>Containers_Active</th><th>Log_API_Latency</th><th>RAM_GB</th>
+        </tr></thead><tbody>${scaledTable.map(r=>`<tr>
+          ${cols.map(c=>`<td class="scaled-cell">${r[c].toFixed(4)}</td>`).join('')}
+        </tr>`).join('')}</tbody></table>
+      </div>
+      <div style="margin-top:16px;background:#1a7f3722;border:1px solid #2ea043;border-radius:8px;padding:14px;font-size:0.85rem;color:#3fb950;">
+        ✓ All features now have mean ≈ 0, std ≈ 1. Gradient descent will converge smoothly — no feature dominates the loss landscape.
+      </div>
+      <div style="margin-top:16px;"><button onclick="unlock(5);goStage(5);">📝 Take Final Quiz</button></div>
+    </div>`;
+}
+
+// ============ QUIZ ============
+const quiz = [
+  {
+    q: 'Q1: In Stage 1, why did we use the <em>median</em> to fill missing values instead of the <em>mean</em>?',
+    opts: [
+      ['The median is faster to compute', false],
+      ['The median is not affected by extreme outliers (like a 10,000ms latency spike), so it gives a more representative "typical" value', true],
+      ['The mean is always wrong for ML', false],
+    ],
+    exp: 'The mean is easily pulled by outliers. A single 10,000ms spike would inflate the mean by hundreds of ms, biasing all filled values. The median just picks the middle value — robust to extremes.'
+  },
+  {
+    q: 'Q2: After log transform in Stage 2, the skewness score dropped from ~4.2 to ~0.3. What does this tell you?',
+    opts: [
+      ['The dataset got 10× smaller', false],
+      ['Bad data was deleted from the dataset', false],
+      ['The distribution is now roughly symmetric — extreme outliers no longer dominate; the model can learn patterns from all data points equally', true],
+    ],
+    exp: 'Skewness near 0 means the distribution is balanced around its center. The 10,000ms spike still exists — it\'s just scaled down to ~9.2 instead of 10,000, so it can\'t bully the model.'
+  },
+  {
+    q: 'Q3: In Stage 3 you dropped RAM_MB (r=0.98 with RAM_GB). What would happen if you had kept BOTH?',
+    opts: [
+      ['The model would train twice as fast because it has more data', false],
+      ['The model\'s weights for RAM would become unstable and meaningless — one might be hugely positive and the other hugely negative, cancelling each other out', true],
+      ['Nothing — ML models automatically ignore redundant features', false],
+    ],
+    exp: 'Multicollinearity causes the optimizer to "fight itself" — both features are equal, so it can assign any combination of weights (e.g. +1M and -1M) that cancel out. This is the "two GPS apps shouting the same directions" problem.'
+  },
+];
+
+let quizScore = 0;
+function renderQuiz() {
+  termClear();
+  term(`<span class="t-green">🎓 Phase 1 Capstone Quiz — 3 questions</span>`);
+  term(`<span class="t-dim">  Test your understanding of the 4 preprocessing stages.</span>`);
+
+  let html = '<div class="panel quiz-section">';
+  quiz.forEach((q, qi) => {
+    html += `<div class="quiz-q"><strong>${q.q}</strong><br><br>`;
+    q.opts.forEach((opt, oi) => {
+      html += `<button class="quiz-opt" onclick="quizAns(${qi},${oi})" id="q${qi}o${oi}">${opt[0]}</button>`;
+    });
+    html += `<div id="q${qi}-exp" style="display:none;margin-top:10px;font-size:0.85rem;color:#8b949e;background:#21262d;padding:12px;border-radius:6px;"></div>`;
+    html += '</div>';
+  });
+  html += `<div id="quiz-score" style="display:none;"></div>`;
+  html += '</div>';
+  document.getElementById('stage-content').innerHTML = html;
+}
+
+const quizDone = new Set();
+function quizAns(qi, oi) {
+  if (quizDone.has(qi)) return;
+  quizDone.add(qi);
+  const q = quiz[qi];
+  const correct = q.opts[oi][1];
+  document.getElementById(`q${qi}o${oi}`).className = 'quiz-opt ' + (correct?'correct':'wrong');
+  if (!correct) {
+    q.opts.forEach((_,i)=>{ if(q.opts[i][1]) document.getElementById(`q${qi}o${i}`).className='quiz-opt correct'; });
+  }
+  document.querySelectorAll(`#q${qi}o${0},#q${qi}o${1},#q${qi}o${2}`).forEach(b=>b.disabled=true);
+  const exp = document.getElementById(`q${qi}-exp`);
+  exp.style.display='block';
+  exp.textContent = '💡 ' + q.exp;
+  if (correct) quizScore++;
+
+  if (quizDone.size === quiz.length) {
+    setTimeout(() => {
+      document.getElementById('quiz-score').style.display='block';
+      document.getElementById('quiz-score').innerHTML =
+        `<div style="text-align:center;padding:16px;background:${quizScore===3?'#1a7f3722':'#21262d'};border-radius:8px;border:1px solid ${quizScore===3?'#2ea043':'#30363d'};">
+          <div style="font-size:1.5rem;font-weight:800;color:${quizScore===3?'#3fb950':'#d29922'};">${quizScore} / 3</div>
+          <div style="color:#8b949e;margin:8px 0;">${quizScore===3?'Perfect score! You truly understand the pipeline.':quizScore===2?'Well done — one concept to review.':'Review the stages above and try again.'}</div>
+          <button onclick="document.getElementById('graduation').style.display='block';this.style.display='none'">🎓 Complete Phase 1</button>
+        </div>`;
+      if (quizScore >= 2) document.getElementById('graduation').style.display='block';
+    }, 600);
+  }
+}
+
+// Init
+goStage(0);
+</script>
+</body>
+</html>

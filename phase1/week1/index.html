@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 1 — Data Foundations Sandbox</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0d1117; color: #e6edf3; }
+  header {
+    background: #161b22; border-bottom: 1px solid #30363d;
+    padding: 20px 40px; display: flex; align-items: center; gap: 16px;
+  }
+  header a { color: #58a6ff; text-decoration: none; font-size: 0.9rem; }
+  header h1 { font-size: 1.4rem; }
+  .tabs {
+    display: flex; gap: 4px; padding: 0 40px;
+    background: #161b22; border-bottom: 1px solid #30363d;
+  }
+  .tab {
+    padding: 14px 22px; cursor: pointer; font-size: 0.9rem;
+    border-bottom: 3px solid transparent; color: #8b949e;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .tab:hover { color: #e6edf3; }
+  .tab.active { color: #58a6ff; border-bottom-color: #58a6ff; }
+  .panel { display: none; padding: 40px; max-width: 900px; margin: 0 auto; }
+  .panel.active { display: block; }
+
+  /* Common components */
+  h2 { font-size: 1.5rem; margin-bottom: 8px; }
+  .subtitle { color: #8b949e; margin-bottom: 32px; font-size: 0.95rem; line-height: 1.6; }
+  .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 24px; margin-bottom: 20px; }
+  .card h3 { font-size: 1rem; margin-bottom: 12px; color: #58a6ff; }
+  button {
+    background: #238636; border: 1px solid #2ea043; color: #fff;
+    padding: 10px 22px; border-radius: 8px; cursor: pointer;
+    font-size: 0.9rem; font-weight: 600; transition: background 0.2s;
+  }
+  button:hover { background: #2ea043; }
+  button.secondary {
+    background: #21262d; border-color: #30363d; color: #e6edf3;
+  }
+  button.secondary:hover { background: #30363d; }
+  .result-box {
+    background: #0d1117; border: 1px solid #30363d; border-radius: 6px;
+    padding: 16px; font-family: monospace; font-size: 0.9rem;
+    margin-top: 16px; min-height: 60px; line-height: 1.8;
+  }
+  .green { color: #3fb950; }
+  .red { color: #ff7b72; }
+  .yellow { color: #d29922; }
+  .blue { color: #58a6ff; }
+  .purple { color: #bc8cff; }
+  .bar-wrap { background: #21262d; border-radius: 4px; height: 28px; margin: 8px 0; position: relative; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; display: flex; align-items: center; padding-left: 10px; font-size: 0.8rem; font-weight: 700; transition: width 1s ease; }
+
+  /* BENCHMARK */
+  .bench-controls { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+  label { font-size: 0.9rem; color: #8b949e; }
+  input[type=range] { accent-color: #58a6ff; }
+
+  /* PANDAS */
+  .step-btn-row { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  th { background: #21262d; padding: 8px 12px; text-align: left; color: #8b949e; border-bottom: 1px solid #30363d; }
+  td { padding: 8px 12px; border-bottom: 1px solid #21262d; font-family: monospace; }
+  .nan { color: #ff7b72; font-style: italic; }
+  .imputed { color: #3fb950; font-weight: bold; }
+  .info-row { display: flex; gap: 20px; margin-top: 16px; }
+  .info-pill { background: #21262d; border-radius: 6px; padding: 10px 16px; font-size: 0.85rem; }
+  .info-pill span { color: #58a6ff; font-weight: 700; font-size: 1.1rem; display: block; }
+
+  /* MATRIX */
+  .matrix-inputs { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; }
+  .matrix-box { background: #21262d; border-radius: 8px; padding: 16px 24px; text-align: center; min-width: 140px; }
+  .matrix-box .dims { font-size: 1.8rem; font-weight: 800; color: #58a6ff; }
+  .matrix-box label { font-size: 0.8rem; color: #8b949e; }
+  .matrix-box input[type=number] {
+    background: #0d1117; border: 1px solid #30363d; color: #e6edf3;
+    border-radius: 4px; padding: 6px 10px; width: 60px; font-size: 0.9rem; text-align: center;
+  }
+  .operator { font-size: 2rem; color: #8b949e; }
+  .result-matrix { background: #21262d; border-radius: 8px; padding: 16px 24px; text-align: center; min-width: 160px; }
+  .result-matrix .dims { font-size: 1.8rem; font-weight: 800; }
+
+  /* GRADIENT DESCENT */
+  canvas { border-radius: 8px; display: block; max-width: 100%; }
+  .gd-controls { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; margin: 16px 0; }
+  .gd-controls label { color: #8b949e; font-size: 0.9rem; }
+  .lr-display { color: #58a6ff; font-weight: 700; font-size: 1.1rem; min-width: 40px; }
+  .gd-stat { background: #21262d; border-radius: 6px; padding: 10px 16px; font-size: 0.85rem; }
+  .gd-stat span { color: #58a6ff; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<header>
+  <a href="../../index.html">← Back to Arena</a>
+  <div>
+    <div style="font-size:0.75rem;color:#8b949e;text-transform:uppercase;letter-spacing:1px;">Week 1</div>
+    <h1>🔬 Data Foundations Sandbox</h1>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('bench')">⚡ Benchmark</div>
+  <div class="tab" onclick="switchTab('pandas')">🐼 Pandas Wrangler</div>
+  <div class="tab" onclick="switchTab('matrix')">📐 Matrix Multiplier</div>
+  <div class="tab" onclick="switchTab('gd')">⛷️ Gradient Descent</div>
+</div>
+
+<!-- =================== BENCHMARK =================== -->
+<div id="panel-bench" class="panel active">
+  <h2>⚡ The Vectorized Mindset</h2>
+  <p class="subtitle">
+    Python loops compute one element at a time. NumPy arrays use hardware-optimized batch operations —
+    <strong>up to 100× faster</strong> for large data. Drag the slider and run the benchmark to see the difference.
+  </p>
+
+  <div class="card">
+    <h3>Live Benchmark Runner</h3>
+    <div class="bench-controls">
+      <div>
+        <label>Array size: <strong id="arr-size-display" class="blue">100,000</strong></label><br>
+        <input type="range" id="arr-size" min="10000" max="2000000" step="10000" value="100000"
+               oninput="document.getElementById('arr-size-display').textContent = (+this.value).toLocaleString()">
+      </div>
+      <button onclick="runBenchmark()">▶ Run Benchmark</button>
+    </div>
+
+    <div>
+      <div style="margin-bottom:6px;font-size:0.85rem;color:#8b949e;">🐢 Python for-loop</div>
+      <div class="bar-wrap">
+        <div id="loop-bar" class="bar-fill" style="width:0%;background:#ff7b72;">
+          <span id="loop-label"></span>
+        </div>
+      </div>
+
+      <div style="margin:12px 0 6px;font-size:0.85rem;color:#8b949e;">🚀 NumPy vectorized</div>
+      <div class="bar-wrap">
+        <div id="vec-bar" class="bar-fill" style="width:0%;background:#3fb950;">
+          <span id="vec-label"></span>
+        </div>
+      </div>
+    </div>
+
+    <div id="bench-result" class="result-box" style="display:none;"></div>
+  </div>
+
+  <div class="card">
+    <h3>Why It Matters</h3>
+    <p style="font-size:0.88rem;color:#8b949e;line-height:1.8;">
+      🔹 A for-loop executes Python bytecode per element — interpreter overhead per step.<br>
+      🔹 NumPy delegates to pre-compiled C/Fortran routines that process the entire array in one hardware call.<br>
+      🔹 In ML training, you sum gradients across <em>millions</em> of examples — loops would take hours; vectorization takes seconds.
+    </p>
+  </div>
+</div>
+
+<!-- =================== PANDAS =================== -->
+<div id="panel-pandas" class="panel">
+  <h2>🐼 Pandas Data Wrangler</h2>
+  <p class="subtitle">
+    Step through 5 real data cleaning operations on a slice of the Titanic dataset.
+    Watch the DataFrame shape and values change at each step.
+  </p>
+
+  <div class="card">
+    <h3>Pipeline Steps</h3>
+    <div class="step-btn-row">
+      <button class="secondary" onclick="pandasStep(0)">0. Raw data</button>
+      <button class="secondary" onclick="pandasStep(1)">1. Detect nulls</button>
+      <button class="secondary" onclick="pandasStep(2)">2. Impute missing</button>
+      <button class="secondary" onclick="pandasStep(3)">3. Filter rows</button>
+      <button class="secondary" onclick="pandasStep(4)">4. Group by Pclass</button>
+    </div>
+    <div id="pandas-status" class="result-box" style="margin-bottom:16px;min-height:40px;"></div>
+    <div id="pandas-table"></div>
+    <div class="info-row" id="pandas-info"></div>
+  </div>
+</div>
+
+<!-- =================== MATRIX =================== -->
+<div id="panel-matrix" class="panel">
+  <h2>📐 Matrix Dimension Matcher</h2>
+  <p class="subtitle">
+    Matrix multiplication <strong>A × B</strong> is only valid when A's columns = B's rows. The result shape is
+    (A's rows) × (B's columns). Change the dimensions and see instantly if it works.
+  </p>
+
+  <div class="card">
+    <h3>Dimension Checker</h3>
+    <div class="matrix-inputs">
+      <div class="matrix-box">
+        <div style="font-size:0.8rem;color:#8b949e;margin-bottom:10px;">Matrix A</div>
+        <div style="display:flex;gap:8px;align-items:center;justify-content:center;">
+          <input type="number" id="a-rows" value="3" min="1" max="9" oninput="checkMatrix()">
+          <span style="color:#8b949e">×</span>
+          <input type="number" id="a-cols" value="4" min="1" max="9" oninput="checkMatrix()">
+        </div>
+        <div id="a-dim" class="dims" style="margin-top:10px;">3×4</div>
+      </div>
+      <div class="operator">×</div>
+      <div class="matrix-box">
+        <div style="font-size:0.8rem;color:#8b949e;margin-bottom:10px;">Matrix B</div>
+        <div style="display:flex;gap:8px;align-items:center;justify-content:center;">
+          <input type="number" id="b-rows" value="4" min="1" max="9" oninput="checkMatrix()">
+          <span style="color:#8b949e">×</span>
+          <input type="number" id="b-cols" value="2" min="1" max="9" oninput="checkMatrix()">
+        </div>
+        <div id="b-dim" class="dims" style="margin-top:10px;">4×2</div>
+      </div>
+      <div class="operator">=</div>
+      <div class="result-matrix" id="result-matrix">
+        <div style="font-size:0.8rem;color:#8b949e;margin-bottom:10px;">Result</div>
+        <div class="dims green">3×2</div>
+        <div style="font-size:0.75rem;color:#3fb950;margin-top:6px;">✓ Valid</div>
+      </div>
+    </div>
+    <div id="matrix-explain" class="result-box"></div>
+  </div>
+
+  <div class="card">
+    <h3>The Rule</h3>
+    <p style="font-size:0.88rem;color:#8b949e;line-height:1.8;">
+      For <strong style="color:#e6edf3">A(m×n) × B(n×p)</strong>: the inner dimensions (<em>n</em>) must match.
+      The result is <strong style="color:#e6edf3">m×p</strong>.<br><br>
+      In neural networks, each layer is a matrix multiply — the shapes must "flow" from input → hidden → output.
+      Getting this wrong is one of the most common bugs in ML code.
+    </p>
+  </div>
+</div>
+
+<!-- =================== GRADIENT DESCENT =================== -->
+<div id="panel-gd" class="panel">
+  <h2>⛷️ Gradient Descent Simulator</h2>
+  <p class="subtitle">
+    The ball rolls down the curve <strong>y = (x − 3)²</strong> toward its minimum at x=3.
+    The <em>learning rate</em> controls step size. Too small = slow. Too large = chaos.
+  </p>
+
+  <div class="card">
+    <canvas id="gd-canvas" width="820" height="340"></canvas>
+    <div class="gd-controls">
+      <div>
+        <label>Learning rate η: <span class="lr-display" id="lr-display">0.10</span></label><br>
+        <input type="range" id="lr-slider" min="0.01" max="1.2" step="0.01" value="0.1"
+               oninput="updateLR()">
+      </div>
+      <button onclick="gdStep()">⏭ Single Step</button>
+      <button onclick="gdAuto()" id="auto-btn">▶ Auto</button>
+      <button class="secondary" onclick="gdReset()">↺ Reset</button>
+    </div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;">
+      <div class="gd-stat">Position x: <span id="stat-x">6.00</span></div>
+      <div class="gd-stat">Loss y: <span id="stat-y">9.00</span></div>
+      <div class="gd-stat">Step #: <span id="stat-step">0</span></div>
+      <div class="gd-stat">Gradient: <span id="stat-grad">6.00</span></div>
+    </div>
+    <div id="gd-message" class="result-box" style="margin-top:16px;display:none;"></div>
+  </div>
+</div>
+
+<script>
+// ============ TAB LOGIC ============
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  const idx = ['bench','pandas','matrix','gd'].indexOf(name);
+  document.querySelectorAll('.tab')[idx].classList.add('active');
+  document.getElementById('panel-' + name).classList.add('active');
+  if (name === 'gd') drawGD();
+  if (name === 'matrix') checkMatrix();
+  if (name === 'pandas') pandasStep(0);
+}
+
+// ============ BENCHMARK ============
+function runBenchmark() {
+  const size = parseInt(document.getElementById('arr-size').value);
+  document.getElementById('bench-result').style.display = 'block';
+  document.getElementById('bench-result').innerHTML = '<span class="yellow">⏳ Running benchmark...</span>';
+
+  setTimeout(() => {
+    // Simulate loop timing (scaled to array size)
+    const loopMs = Math.round(size / 1000 * 4.2 + Math.random() * 20);
+    const vecMs = Math.round(size / 1000 * 0.08 + Math.random() * 0.5);
+    const speedup = Math.round(loopMs / vecMs);
+
+    const maxMs = loopMs;
+    const loopPct = 95;
+    const vecPct = Math.max(2, Math.round(vecMs / maxMs * 95));
+
+    document.getElementById('loop-bar').style.width = loopPct + '%';
+    document.getElementById('loop-label').textContent = loopMs + ' ms';
+    document.getElementById('vec-bar').style.width = vecPct + '%';
+    document.getElementById('vec-label').textContent = vecMs + ' ms';
+
+    document.getElementById('bench-result').innerHTML =
+      `<span class="green">✓ Benchmark complete for ${size.toLocaleString()} elements</span>\n` +
+      `  🐢 Python loop:   <span class="red">${loopMs} ms</span>\n` +
+      `  🚀 NumPy array:   <span class="green">${vecMs} ms</span>\n` +
+      `  ⚡ Speedup:       <span class="blue">${speedup}× faster</span>\n\n` +
+      `  Code (Python):\n  loop_sum = sum(x**2 for x in data)          # slow\n  vec_sum  = np.sum(data ** 2)                 # ${speedup}× faster`;
+  }, 400);
+}
+
+// ============ PANDAS WRANGLER ============
+const rawData = [
+  { Survived: 1, Pclass: 1, Name: 'Allen, Miss Ella', Age: 29, Fare: 211.3, Embarked: 'S' },
+  { Survived: 0, Pclass: 3, Name: 'Braund, Mr. Owen', Age: null, Fare: 7.25, Embarked: 'S' },
+  { Survived: 1, Pclass: 1, Name: 'Cumings, Mrs.', Age: 38, Fare: 71.2, Embarked: 'C' },
+  { Survived: 0, Pclass: 2, Name: 'Heikkinen, Miss.', Age: 26, Fare: 7.9, Embarked: 'S' },
+  { Survived: 0, Pclass: 3, Name: 'Moran, Mr. James', Age: null, Fare: 8.0, Embarked: 'Q' },
+  { Survived: 1, Pclass: 1, Name: 'McCarthy, Mr. Timm.', Age: 54, Fare: 51.8, Embarked: 'S' },
+  { Survived: 0, Pclass: 3, Name: 'Palsson, Gosta', Age: 2, Fare: 21.1, Embarked: 'S' },
+  { Survived: 1, Pclass: 3, Name: 'Johnson, Mrs.', Age: 27, Fare: 11.1, Embarked: 'S' },
+];
+const medianAge = 27.5;
+
+const pandasSteps = [
+  {
+    label: "Raw dataset loaded",
+    code: "df = pd.read_csv('titanic.csv')\nprint(df.shape)  # (8, 6)",
+    filter: d => true,
+    highlight: null,
+  },
+  {
+    label: "Null detection: df.isna().sum()",
+    code: "df.isna().sum()\n# Age: 2 missing values",
+    filter: d => true,
+    highlight: 'nulls',
+  },
+  {
+    label: "Imputation: df['Age'].fillna(df['Age'].median())",
+    code: "df['Age'] = df['Age'].fillna(df['Age'].median())  # median=27.5",
+    filter: d => true,
+    highlight: 'imputed',
+  },
+  {
+    label: "Filter: df[df['Survived'] == 1]  → 3 rows",
+    code: "survivors = df[df['Survived'] == 1]",
+    filter: d => d.Survived === 1,
+    highlight: null,
+  },
+  {
+    label: "Groupby: df.groupby('Pclass')['Fare'].mean()",
+    code: "df.groupby('Pclass')['Fare'].mean()",
+    filter: null, // special: group summary
+    highlight: null,
+  },
+];
+
+function pandasStep(idx) {
+  const step = pandasSteps[idx];
+  document.getElementById('pandas-status').innerHTML =
+    `<span class="blue">Step ${idx}:</span> ${step.label}\n<span class="yellow">→ ${step.code}</span>`;
+
+  // Highlight active step button
+  document.querySelectorAll('.step-btn-row button').forEach((b, i) => {
+    b.style.borderColor = i === idx ? '#58a6ff' : '#30363d';
+    b.style.color = i === idx ? '#58a6ff' : '';
+  });
+
+  if (idx === 4) {
+    // Group by summary
+    const groups = {1: [], 2: [], 3: []};
+    rawData.forEach(d => {
+      const age = d.Age === null ? medianAge : d.Age;
+      groups[d.Pclass].push({...d, Age: age});
+    });
+    const means = Object.entries(groups).map(([cls, rows]) => ({
+      Pclass: cls,
+      Count: rows.length,
+      AvgFare: (rows.reduce((s,r) => s + r.Fare, 0) / rows.length).toFixed(2),
+      AvgAge: (rows.reduce((s,r) => s + r.Age, 0) / rows.length).toFixed(1),
+      SurvivedRate: ((rows.filter(r => r.Survived).length / rows.length) * 100).toFixed(0) + '%',
+    }));
+    document.getElementById('pandas-table').innerHTML = renderGroupTable(means);
+    document.getElementById('pandas-info').innerHTML =
+      `<div class="info-pill">Shape: <span>3×5</span></div><div class="info-pill">Operation: <span>groupby</span></div>`;
+    return;
+  }
+
+  const data = step.filter ? rawData.filter(step.filter) : rawData;
+  let nullCount = 0;
+  const rows = data.map(d => {
+    const age = d.Age === null ? null : (idx >= 2 ? (d.Age === null ? medianAge : d.Age) : d.Age);
+    const rawAge = d.Age;
+    const displayAge = rawAge === null
+      ? (idx >= 2 ? `<span class="imputed">${medianAge} ★</span>` : `<span class="nan">NaN ✕</span>`)
+      : rawAge;
+    if (rawAge === null) nullCount++;
+    return `<tr>
+      <td>${d.Survived === 1 ? '<span class="green">✓</span>' : '<span class="red">✗</span>'}</td>
+      <td>${d.Pclass}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.Name}</td>
+      <td>${displayAge}</td>
+      <td>${d.Fare}</td>
+      <td>${d.Embarked}</td>
+    </tr>`;
+  });
+
+  document.getElementById('pandas-table').innerHTML = `
+    <table>
+      <thead><tr><th>Survived</th><th>Pclass</th><th>Name</th><th>Age</th><th>Fare</th><th>Embarked</th></tr></thead>
+      <tbody>${rows.join('')}</tbody>
+    </table>`;
+
+  document.getElementById('pandas-info').innerHTML = `
+    <div class="info-pill">Rows: <span>${data.length}</span></div>
+    <div class="info-pill">Cols: <span>6</span></div>
+    ${idx === 1 ? `<div class="info-pill">Age nulls: <span class="red">${nullCount}</span></div>` : ''}
+    ${idx === 2 ? `<div class="info-pill">Imputed: <span class="green">2 values</span></div>` : ''}
+  `;
+}
+
+function renderGroupTable(means) {
+  return `<table>
+    <thead><tr><th>Pclass</th><th>Count</th><th>Avg Fare</th><th>Avg Age</th><th>Survival Rate</th></tr></thead>
+    <tbody>${means.map(m => `<tr>
+      <td>${m.Pclass}</td><td>${m.Count}</td>
+      <td class="blue">£${m.AvgFare}</td><td>${m.AvgAge}</td>
+      <td class="green">${m.SurvivedRate}</td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+// ============ MATRIX ============
+function checkMatrix() {
+  const ar = parseInt(document.getElementById('a-rows').value) || 1;
+  const ac = parseInt(document.getElementById('a-cols').value) || 1;
+  const br = parseInt(document.getElementById('b-rows').value) || 1;
+  const bc = parseInt(document.getElementById('b-cols').value) || 1;
+  document.getElementById('a-dim').textContent = ar + '×' + ac;
+  document.getElementById('b-dim').textContent = br + '×' + bc;
+  const valid = ac === br;
+  const resEl = document.getElementById('result-matrix');
+  resEl.innerHTML = `
+    <div style="font-size:0.8rem;color:#8b949e;margin-bottom:10px;">Result</div>
+    <div class="dims ${valid ? 'green' : 'red'}">${valid ? ar + '×' + bc : '✗'}</div>
+    <div style="font-size:0.75rem;color:${valid ? '#3fb950' : '#ff7b72'};margin-top:6px;">${valid ? '✓ Valid' : '✗ Invalid'}</div>
+  `;
+  const expl = document.getElementById('matrix-explain');
+  if (valid) {
+    expl.innerHTML = `<span class="green">✓ A(${ar}×${ac}) × B(${br}×${bc}) = C(${ar}×${bc})</span>\n` +
+      `  Inner dimensions match: A.cols(${ac}) == B.rows(${br})  ✓\n` +
+      `  Result: ${ar} rows × ${bc} cols\n\n` +
+      `  Python:\n  A = np.random.randn(${ar}, ${ac})\n  B = np.random.randn(${br}, ${bc})\n  C = A @ B   # shape: (${ar}, ${bc})`;
+  } else {
+    expl.innerHTML = `<span class="red">✗ Cannot multiply A(${ar}×${ac}) × B(${br}×${bc})</span>\n` +
+      `  A.cols(${ac}) ≠ B.rows(${br})  — inner dimensions must match.\n\n` +
+      `  Fix: Set B rows = ${ac}  (or A cols = ${br})\n\n` +
+      `  This would throw in Python:\n  ValueError: matmul: Input operand 1 has a mismatch\n  in its core dimension 0, with gufunc signature\n  (n?,k),(k,m?)->(n?,m?)`;
+  }
+}
+
+// ============ GRADIENT DESCENT ============
+let gdX = 6, gdLR = 0.1, gdStep_ = 0, gdRunning = false, gdTimer = null;
+const gdFn = x => (x - 3) ** 2;
+const gdGrad = x => 2 * (x - 3);
+
+function drawGD() {
+  const canvas = document.getElementById('gd-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const padL = 60, padR = 30, padT = 30, padB = 50;
+  const xMin = -1, xMax = 9;
+  const yMin = -0.5, yMax = 40;
+
+  function toScreen(x, y) {
+    const sx = padL + (x - xMin) / (xMax - xMin) * (W - padL - padR);
+    const sy = H - padB - (y - yMin) / (yMax - yMin) * (H - padT - padB);
+    return [sx, sy];
+  }
+
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid
+  ctx.strokeStyle = '#21262d';
+  ctx.lineWidth = 1;
+  for (let gx = 0; gx <= 9; gx++) {
+    const [sx] = toScreen(gx, 0);
+    ctx.beginPath(); ctx.moveTo(sx, padT); ctx.lineTo(sx, H - padB); ctx.stroke();
+    ctx.fillStyle = '#484f58'; ctx.font = '11px monospace';
+    ctx.fillText(gx, sx - 5, H - padB + 15);
+  }
+  for (let gy = 0; gy <= 36; gy += 9) {
+    const [, sy] = toScreen(0, gy);
+    ctx.beginPath(); ctx.moveTo(padL, sy); ctx.lineTo(W - padR, sy); ctx.stroke();
+    ctx.fillStyle = '#484f58'; ctx.fillText(gy, 4, sy + 4);
+  }
+
+  // Curve
+  ctx.beginPath(); ctx.strokeStyle = '#58a6ff'; ctx.lineWidth = 3;
+  for (let px = 0; px <= W - padL - padR; px++) {
+    const x = xMin + px / (W - padL - padR) * (xMax - xMin);
+    const [sx, sy] = toScreen(x, gdFn(x));
+    px === 0 ? ctx.moveTo(sx, sy) : ctx.lineTo(sx, sy);
+  }
+  ctx.stroke();
+
+  // Minimum marker
+  const [mx, my] = toScreen(3, 0);
+  ctx.beginPath(); ctx.strokeStyle = '#3fb950'; ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+  ctx.moveTo(mx, my); ctx.lineTo(mx, padT);
+  ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = '#3fb950'; ctx.font = 'bold 12px monospace';
+  ctx.fillText('minimum (x=3)', mx + 6, padT + 14);
+
+  // Ball
+  const bx = Math.max(xMin, Math.min(xMax, gdX));
+  const by = gdFn(bx);
+  const [sx, sy] = toScreen(bx, by);
+  const overshot = Math.abs(gdX - 3) > 6;
+  const ballColor = overshot ? '#ff7b72' : '#ffa657';
+
+  // Gradient arrow
+  const grad = gdGrad(gdX);
+  const stepSize = gdLR * grad;
+  const [nx, ny] = toScreen(gdX - stepSize * 0.3, by);
+  ctx.beginPath();
+  ctx.strokeStyle = overshot ? '#ff4444' : '#d29922';
+  ctx.lineWidth = 2;
+  ctx.moveTo(sx, sy);
+  ctx.lineTo(Math.min(Math.max(nx, padL), W - padR), sy);
+  ctx.stroke();
+
+  // Ball shadow
+  ctx.beginPath();
+  ctx.fillStyle = ballColor + '44';
+  ctx.arc(sx, sy, 18, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Ball
+  ctx.beginPath();
+  ctx.fillStyle = ballColor;
+  ctx.arc(sx, sy, 12, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Axis labels
+  ctx.fillStyle = '#8b949e'; ctx.font = '12px monospace';
+  ctx.fillText('x (weight value)', W / 2 - 40, H - 8);
+  ctx.save(); ctx.translate(14, H / 2); ctx.rotate(-Math.PI / 2);
+  ctx.fillText('loss y=(x-3)²', -50, 0); ctx.restore();
+
+  // Stats
+  document.getElementById('stat-x').textContent = gdX.toFixed(4);
+  document.getElementById('stat-y').textContent = gdFn(gdX).toFixed(4);
+  document.getElementById('stat-step').textContent = gdStep_;
+  document.getElementById('stat-grad').textContent = gdGrad(gdX).toFixed(4);
+}
+
+function gdStepCalc() {
+  const grad = gdGrad(gdX);
+  gdX = gdX - gdLR * grad;
+  gdStep_++;
+  drawGD();
+  const msg = document.getElementById('gd-message');
+  if (Math.abs(gdX - 3) > 7) {
+    msg.style.display = 'block';
+    msg.innerHTML = `<span class="red">⚠️ Exploding gradient! Learning rate η=${gdLR.toFixed(2)} is too large.</span>\n` +
+      `The ball overshot the minimum and is diverging. Try a smaller learning rate (≤ 0.2).`;
+    gdAuto(true); // stop
+  } else if (Math.abs(gdX - 3) < 0.001) {
+    msg.style.display = 'block';
+    msg.innerHTML = `<span class="green">✓ Converged! x ≈ 3.0 (minimum) after ${gdStep_} steps. 🎉</span>`;
+    gdAuto(true);
+  } else {
+    msg.style.display = 'none';
+  }
+}
+
+function gdStep() { gdStepCalc(); }
+
+function gdAuto(forceStop = false) {
+  if (forceStop || gdRunning) {
+    clearInterval(gdTimer);
+    gdRunning = false;
+    document.getElementById('auto-btn').textContent = '▶ Auto';
+    return;
+  }
+  gdRunning = true;
+  document.getElementById('auto-btn').textContent = '⏸ Pause';
+  gdTimer = setInterval(() => gdStepCalc(), 120);
+}
+
+function gdReset() {
+  gdAuto(true);
+  gdX = 6; gdStep_ = 0;
+  document.getElementById('gd-message').style.display = 'none';
+  drawGD();
+}
+
+function updateLR() {
+  gdLR = parseFloat(document.getElementById('lr-slider').value);
+  document.getElementById('lr-display').textContent = gdLR.toFixed(2);
+}
+
+// Init
+setTimeout(() => {
+  pandasStep(0);
+  checkMatrix();
+  drawGD();
+}, 100);
+</script>
+</body>
+</html>
