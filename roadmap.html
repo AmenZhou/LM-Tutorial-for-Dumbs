@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ML/DS Learning Arena — Full Roadmap</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:#0d1117; color:#e6edf3; }
+
+  header {
+    background:linear-gradient(135deg,#161b22 0%,#0d1117 100%);
+    border-bottom:1px solid #30363d; padding:40px 60px;
+  }
+  header h1 { font-size:2.4rem; font-weight:800; background:linear-gradient(90deg,#58a6ff,#bc8cff,#ff9944); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:8px; }
+  header p { color:#8b949e; font-size:1rem; max-width:640px; line-height:1.7; }
+  .story-pill { display:inline-block; background:#1f3a5f; border:1px solid #1f6feb; color:#58a6ff; padding:6px 14px; border-radius:20px; font-size:0.82rem; margin-top:14px; }
+
+  nav { background:#161b22; border-bottom:1px solid #30363d; padding:0 60px; display:flex; gap:6px; overflow-x:auto; }
+  nav a { padding:14px 16px; font-size:0.85rem; color:#8b949e; text-decoration:none; white-space:nowrap; border-bottom:3px solid transparent; transition:all 0.2s; }
+  nav a:hover { color:#e6edf3; }
+  nav a.active { color:var(--c); border-bottom-color:var(--c); }
+
+  .progress-bar { background:#21262d; height:6px; }
+  .progress-fill { height:100%; background:linear-gradient(90deg,#3fb950,#58a6ff,#bc8cff); transition:width 0.5s; }
+  .progress-label { text-align:center; font-size:0.8rem; color:#8b949e; padding:6px; }
+
+  main { max-width:1100px; margin:0 auto; padding:40px 30px; }
+
+  .phase { margin-bottom:48px; }
+  .phase-header {
+    display:flex; align-items:center; gap:16px; margin-bottom:20px;
+    padding:20px 24px; border-radius:12px; border-left:4px solid var(--phase-color);
+    background:var(--phase-bg);
+  }
+  .phase-icon { font-size:2rem; }
+  .phase-meta { flex:1; }
+  .phase-title { font-size:1.2rem; font-weight:800; color:var(--phase-color); }
+  .phase-subtitle { font-size:0.85rem; color:#8b949e; margin-top:3px; line-height:1.6; }
+  .phase-badge { font-size:0.75rem; font-weight:700; padding:4px 12px; border-radius:12px; white-space:nowrap; }
+  .badge-done { background:#1a7f37; color:#3fb950; }
+  .badge-progress { background:#7a4200; color:#ff9944; }
+  .badge-planned { background:#21262d; color:#8b949e; }
+
+  .weeks { display:flex; flex-direction:column; gap:8px; }
+  .week {
+    display:grid; grid-template-columns:28px 1fr auto; gap:12px; align-items:start;
+    background:#161b22; border:1px solid #30363d; border-radius:8px; padding:14px 16px;
+    transition:border-color 0.2s;
+  }
+  .week:hover { border-color:#484f58; }
+  .week.done { border-left:3px solid #3fb950; }
+  .week.progress { border-left:3px solid #ff9944; }
+  .week.planned { border-left:3px solid #30363d; opacity:0.7; }
+  .week-num { font-size:0.78rem; color:#484f58; font-weight:700; padding-top:2px; }
+  .week-body { }
+  .week-title { font-size:0.9rem; font-weight:700; margin-bottom:4px; display:flex; align-items:center; gap:8px; }
+  .week-game { font-size:0.82rem; color:#8b949e; margin-bottom:4px; }
+  .week-example { font-size:0.8rem; color:#484f58; font-style:italic; }
+  .week-status { font-size:0.72rem; font-weight:700; padding:3px 9px; border-radius:10px; white-space:nowrap; align-self:center; }
+  .ws-done { background:#1a7f37; color:#3fb950; }
+  .ws-progress { background:#3a2200; color:#ff9944; }
+  .ws-next { background:#1f3a5f; color:#58a6ff; }
+  .ws-planned { background:#21262d; color:#484f58; }
+
+  .week a { text-decoration:none; color:inherit; display:contents; }
+
+  .connector { text-align:center; color:#30363d; font-size:1.4rem; margin:4px 0; }
+
+  footer { text-align:center; padding:40px; color:#484f58; font-size:0.82rem; border-top:1px solid #21262d; }
+
+  @media(max-width:600px){ header{padding:24px 20px;} main{padding:20px;} nav{padding:0 20px;} }
+</style>
+</head>
+<body>
+
+<header>
+  <a href="index.html" style="color:#8b949e;font-size:0.85rem;text-decoration:none;">← Back to Arena</a>
+  <h1 style="margin-top:12px;">Full Learning Roadmap</h1>
+  <p>6 phases · 40 weeks · Beginner to ML Engineer. Every game and example is built around a single story so the skills connect.</p>
+  <div class="story-pill">🏢 The CloudSync Story — you're an engineer at a growing SaaS startup. Every week solves a real problem you'd face there.</div>
+</header>
+
+<div class="progress-bar">
+  <div class="progress-fill" style="width:15%"></div>
+</div>
+<div class="progress-label">6 / 40 weeks complete · Phase 1 done · Phase 2 in progress</div>
+
+<nav>
+  <a href="#phase1" class="active" style="--c:#3fb950;">Phase 1 — Foundations</a>
+  <a href="#phase2" style="--c:#ff9944;">Phase 2 — Core Algorithms</a>
+  <a href="#phase3" style="--c:#58a6ff;">Phase 3 — Powerful Models</a>
+  <a href="#phase4" style="--c:#bc8cff;">Phase 4 — Neural Networks</a>
+  <a href="#phase5" style="--c:#ff7b72;">Phase 5 — NLP & LLMs</a>
+  <a href="#phase6" style="--c:#d29922;">Phase 6 — Production ML</a>
+</nav>
+
+<main>
+
+<!-- ═══════════════════════════════════════════════════════ PHASE 1 -->
+<div class="phase" id="phase1" style="--phase-color:#3fb950;--phase-bg:#1a3a1a22;">
+  <div class="phase-header">
+    <div class="phase-icon">🧱</div>
+    <div class="phase-meta">
+      <div class="phase-title">Phase 1 — Data Foundations & Math Intuition</div>
+      <div class="phase-subtitle">Before training any model you need to understand the data. Clean it, visualise it, and build the math intuition that every algorithm builds on. CloudSync just hired you — you've inherited a mess of server logs.</div>
+    </div>
+    <span class="phase-badge badge-done">✓ Complete</span>
+  </div>
+  <div class="weeks">
+
+    <div class="week done">
+      <div class="week-num">W1</div>
+      <div class="week-body">
+        <div class="week-title">🔬 Data Foundations Sandbox
+          <a href="phase1/week1/index.html" style="font-size:0.75rem;color:#58a6ff;text-decoration:none;font-weight:400;">Open →</a>
+        </div>
+        <div class="week-game">4 modules: NumPy benchmark · Pandas wrangler · Matrix multiplier · Gradient descent simulator</div>
+        <div class="week-example">Real example: benchmarking how fast you can process 1M server log lines — loop vs vectorised</div>
+      </div>
+      <span class="week-status ws-done">✓ Done</span>
+    </div>
+
+    <div class="week done">
+      <div class="week-num">W2</div>
+      <div class="week-body">
+        <div class="week-title">☁️ Cloud Cost Optimizer Game
+          <a href="phase1/week2/index.html" style="font-size:0.75rem;color:#58a6ff;text-decoration:none;font-weight:400;">Open →</a>
+        </div>
+        <div class="week-game">Raw Mode (canyon) vs Standardized Mode (bowl) — gradient descent arena with live loss landscape</div>
+        <div class="week-example">Real example: predicting monthly AWS bills from EC2 count + DB reads — 20,000× scale mismatch</div>
+      </div>
+      <span class="week-status ws-done">✓ Done</span>
+    </div>
+
+    <div class="week done">
+      <div class="week-num">W3</div>
+      <div class="week-body">
+        <div class="week-title">🕵️ Data Detective Game
+          <a href="phase1/week3/index.html" style="font-size:0.75rem;color:#58a6ff;text-decoration:none;font-weight:400;">Open →</a>
+        </div>
+        <div class="week-game">3 levels: histogram & log transform · scatter forensics · correlation heatmap with drop mechanic</div>
+        <div class="week-example">Real example: diagnosing a telemetry dataset — find the spike, the noise feature, and the duplicate column</div>
+      </div>
+      <span class="week-status ws-done">✓ Done</span>
+    </div>
+
+    <div class="week done">
+      <div class="week-num">W4</div>
+      <div class="week-body">
+        <div class="week-title">🚀 Preprocessing Pipeline Capstone
+          <a href="phase1/week4/index.html" style="font-size:0.75rem;color:#58a6ff;text-decoration:none;font-weight:400;">Open →</a>
+        </div>
+        <div class="week-game">4-stage simulator: impute → log transform → prune → scale · Terminal-style output · 3-question quiz</div>
+        <div class="week-example">Real example: cleaning a raw cluster_telemetry.csv dump before feeding it to any ML model</div>
+      </div>
+      <span class="week-status ws-done">✓ Done</span>
+    </div>
+
+    <div class="week planned">
+      <div class="week-num">W5</div>
+      <div class="week-body">
+        <div class="week-title">📉 "Is This Spike Real?" — Statistics Game</div>
+        <div class="week-game">Distributions · mean & std · z-score outlier detection · confidence intervals · hypothesis testing</div>
+        <div class="week-example">Real example: p95 latency jumped from 120ms to 340ms at 3am. Signal or noise? Should you wake the on-call?</div>
+      </div>
+      <span class="week-status ws-planned">Planned</span>
+    </div>
+
+    <div class="week planned">
+      <div class="week-num">W6</div>
+      <div class="week-body">
+        <div class="week-title">🔍 "The Biased Dataset Crime Scene"</div>
+        <div class="week-game">Sampling bias · data leakage · class imbalance · train/test contamination · finding the bug before training</div>
+        <div class="week-example">Real example: CloudSync's churn model is 94% accurate in staging but 61% in production. Find the leak.</div>
+      </div>
+      <span class="week-status ws-planned">Planned</span>
+    </div>
+
+  </div>
+</div>
+
+<div class="connector">↓</div>
+
+<!-- ═══════════════════════════════════════════════════════ PHASE 2 -->
+<div class="phase" id="phase2" style="--phase-color:#ff9944;--phase-bg:#2a1a0022;">
+  <div class="phase-header">
+    <div class="phase-icon">📈</div>
+    <div class="phase-meta">
+      <div class="phase-title">Phase 2 — Core ML Algorithms</div>
+      <div class="phase-subtitle">Your first real models. Start with predicting numbers (linear regression), move to yes/no decisions (logistic regression), learn why models fail on new data, and use the professional toolkit. CloudSync wants cost predictions and a churn detector.</div>
+    </div>
+    <span class="phase-badge badge-progress">⬤ In Progress</span>
+  </div>
+  <div class="weeks">
+
+    <div class="week done">
+      <div class="week-num">W1</div>
+      <div class="week-body">
+        <div class="week-title">📈 Linear Regression Game
+          <a href="phase2/week1/index.html" style="font-size:0.75rem;color:#58a6ff;text-decoration:none;font-weight:400;">Open →</a>
+        </div>
+        <div class="week-game">Line Fitter game · gradient descent auto-trainer · R² evaluation · naive vs model before/after</div>
+        <div class="week-example">Real example: predict monthly AWS bill from server count — drag slope/intercept to beat the model's MSE</div>
+      </div>
+      <span class="week-status ws-done">✓ Done</span>
+    </div>
+
+    <div class="week progress">
+      <div class="week-num">W2</div>
+      <div class="week-body">
+        <div class="week-title">🎯 Overfitting Arena
+          <a href="phase2/week2/index.html" style="font-size:0.75rem;color:#ff9944;text-decoration:none;font-weight:400;">Open →</a>
+        </div>
+        <div class="week-game">Train/test split · overfitting vs underfitting · regularisation · cross-validation · model complexity dial</div>
+        <div class="week-example">Real example: a cost model trained on 3 months of data memorises those months perfectly — but fails on month 4</div>
+      </div>
+      <span class="week-status ws-next">Next</span>
+    </div>
+
+    <div class="week planned">
+      <div class="week-num">W3</div>
+      <div class="week-body">
+        <div class="week-title">🔢 "5-Feature Bill Predictor" — Multiple Regression</div>
+        <div class="week-game">Add CPU, RAM, storage, network, requests to the model · feature importance · correlation with target · partial plots</div>
+        <div class="week-example">Real example: CloudSync's bill depends on 5 variables — which one matters most? Which can you safely remove?</div>
+      </div>
+      <span class="week-status ws-planned">Planned</span>
+    </div>
+
+    <div class="week planned">
+      <div class="week-num">W4</div>
+      <div class="week-body">
+        <div class="week-title">🛑 "Stop the Model From Cheating" — Regularisation Game</div>
+        <div class="week-game">Overfit model memorises noise · L1 (Lasso) forces small weights to zero · L2 (Ridge) shrinks all weights · dial the penalty</div>
+        <div class="week-example">Real example: a cost model with 50 features overfits. Lasso automatically drops 40 irrelevant ones.</div>
+      </div>
+      <span class="week-status ws-planned">Planned</span>
+    </div>
+
+    <div class="week planned">
+      <div class="week-num">W5</div>
+      <div class="week-body">
+        <div class="week-title">🔀 "Buy or Pass?" — Logistic Regression Classifier
+          <a href="phase2/week3/index.html" style="font-size:0.75rem;color:#8b949e;text-decoration:none;font-weight:400;">Coming →</a>
+        </div>
+        <div class="week-game">Sigmoid function · probability threshold · decision boundary visualiser · binary classification game</div>
+        <div class="week-example">Real example: predict which free trial users will convert to paid — based on login frequency, feature usage, team size</div>
+      </div>
+      <span class="week-status ws-planned">Planned</span>
+    </div>
+
+    <div class="week planned">
+      <div class="week-num">W6</div>
+      <div class="week-body">
+        <div class="week-title">⚖️ "Precision vs Recall Arena"</div>
+        <div class="week-game">Confusion matrix · true positive / false positive / false negative · F1 score · ROC curve · threshold slider game</div>
+        <div class="week-example">Real example: fraud detector catches 100% of fraud but blocks 30% of real payments. Find the right threshold.</div>
+      </div>
+      <span class="week-status ws-planned">Planned</span>
+    </div>
+
+    <div class="week planned">
+      <div class="week-num">W7</div>
+      <div class="week-body">
+        <div class="week-title">🏷️ "Which Tier Broke?" — Multi-class Classification</div>
+        <div class="week-game">Softmax · one-vs-rest · multi-class confusion matrix · class probability outputs</div>
+        <div class="week-example">Real example: classify CloudSync outages as free-tier / pro / enterprise based on their error signature pattern</div>
+      </div>
+      <span class="week-status ws-planned">Planned</span>
+    </div>
+
+    <div class="week planned">
+      <div class="week-num">W8</div>
+      <div class="week-body">
+        <div class="week-title">⚗️ Scikit-Learn Capstone
+          <a href="phase2/week4/index.html" style="font-size:0.75rem;color:#8b949e;text-decoration:none;font-weight:400;">Coming →</a>
+        </div>
+        <div class="week-game">sklearn Pipeline · fit/predict/score · StandardScaler · 3-model comparison · full workflow in 20 lines</div>
+        <div class="week-example">Real example: raw user behaviour data → feature engineering → train 3 models → pick the winner for production</div>
+      </div>
+      <span class="week-status ws-planned">Planned</span>
+    </div>
+
+  </div>
+</div>
+
+<div class="connector">↓</div>
+
+<!-- ═══════════════════════════════════════════════════════ PHASE 3 -->
+<div class="phase" id="phase3" style="--phase-color:#58a6ff;--phase-bg:#1f3a5f22;">
+  <div class="phase-header">
+    <div class="phase-icon">🌲</div>
+    <div class="phase-meta">
+      <div class="phase-title">Phase 3 — Powerful Models</div>
+      <div class="phase-subtitle">When straight lines aren't enough. Trees, forests, boosting, clustering, and more — each one a different strategy for finding patterns. CloudSync needs to detect incidents, segment users, and filter spam — problems that linear models can't solve.</div>
+    </div>
+    <span class="phase-badge badge-planned">Planned · 8 weeks</span>
+  </div>
+  <div class="weeks">
+
+    <div class="week planned">
+      <div class="week-num">W1</div>
+      <div class="week-body">
+        <div class="week-title">🎄 "The 20 Questions Incident Triage Game" — Decision Trees</div>
+        <div class="week-game">Build a tree by choosing splits · gini impurity · information gain · depth vs overfitting · visualise each branch</div>
+        <div class="week-example">Real example: a tree that diagnoses CloudSync outages — CPU spike? DB timeout? Memory leak? Each split narrows it down</div>
+      </div>
+      <span class="week-status ws-planned">Planned</span>
+    </div>
+
+    <div class="week planned">
+      <div class="week-num">W2</div>
+      <div class="week-body">
+        <div class="week-title">🗳️ "Committee Vote" — Random Forests</div>
+        <div class="week-game">100 weak trees vote · bagging · feature randomness · out-of-bag error · why the crowd beats any single expert</div>
+        <div class="week-example">Real example: 100 incident detectors each see a random subset of features — their majority vote is more reliable than any single one</div>
+      </div>
+      <span class="week-status ws-planned">Planned</span>
+    </div>
+
+    <div class="week planned">
+      <div class="week-num">W3</div>
+      <div class="week-body">
+        <div class="week-title">📈 "Fix Your Mistakes" — Gradient Boosting / XGBoost</div>
+        <div class="week-game">Start with a bad model · add model 2 that learns model 1's errors · add model 3 · watch accuracy compound</div>
+        <div class="week-example">Real example: linear model predicts churn badly. XGBoost layers 100 corrections on top of it and wins the leaderboard</div>
+      </div>
+      <span class="week-status ws-planned">Planned</span>
+    </div>
+
+    <div class="week planned">
+      <div class="week-num">W4</div>
+      <div class="week-body">
+        <div class="week-title">👥 "Find Your Tribe" — K-Means Clustering</div>
+        <div class="week-game">Drag centroids · watch clusters form · elbow method · unsupervised learning — no labels needed</div>
+        <div class="week-example">Real example: segment 50,000 CloudSync users into usage personas without being told how many groups exist</div>
+      </div>
+      <span class="week-status ws-planned">Planned</span>
+    </div>
+
+    <div class="week planned">
+      <div class="week-num">W5</div>
+      <div class="week-body">
+        <div class="week-title">✏️ "Draw the Perfect Boundary" — Support Vector Machines</div>
+        <div class="week-game">Drag the decision boundary · maximise the margin · support vectors highlighted · kernel trick for curved boundaries</div>
+        <div class="week-example">Real example: separate abusive API callers from legitimate users — the boundary must be as far from both groups as possible</div>
+      </div>
+      <span class="week-status ws-planned">Planned</span>
+    </div>
+
+    <div class="week planned">
+      <div class="week-num">W6</div>
+      <div class="week-body">
+        <div class="week-title">🔎 "The Probability Detective" — Naive Bayes</div>
+        <div class="week-game">Conditional probability · Bayes theorem with emoji dice · word frequency classifier · why "naive" still works</div>
+        <div class="week-example">Real example: classify CloudSync support tickets as billing / technical / feature request using word counts</div>
+      </div>
+      <span class="week-status ws-planned">Planned</span>
+    </div>
+
+    <div class="week planned">
+      <div class="week-num">W7</div>
+      <div class="week-body">
+        <div class="week-title">📍 "How Similar Are These Users?" — K-Nearest Neighbours</div>
+        <div class="week-game">Distance metric game · curse of dimensionality · k selection · plot neighbours in 2D space</div>
+        <div class="week-example">Real example: a user churned. Find the 5 most similar users — are they showing the same warning signs?</div>
+      </div>
+      <span class="week-status ws-planned">Planned</span>
+    </div>
+
+    <div class="week planned">
+      <div class="week-num">W8</div>
+      <div class="week-body">
+        <div class="week-title">🏆 Model Showdown Capstone</div>
+        <div class="week-game">Same churn dataset · 6 models compete · live accuracy leaderboard · accuracy vs speed vs interpretability trade-off matrix</div>
+        <div class="week-example">Real example: which model do you ship to production? The most accurate? The fastest? The most explainable to your CEO?</div>
+      </div>
+      <span class="week-status ws-planned">Planned</span>
+    </div>
+
+  </div>
+</div>
+
+<div class="connector">↓</div>
+
+<!-- ═══════════════════════════════════════════════════════ PHASE 4 -->
+<div class="phase" id="phase4" style="--phase-color:#bc8cff;--phase-bg:#2a1a4022;">
+  <div class="phase-header">
+    <div class="phase-icon">🧠</div>
+    <div class="phase-meta">
+      <div class="phase-title">Phase 4 — Neural Networks & Deep Learning</div>
+      <div class="phase-subtitle">The technology behind ChatGPT, image recognition, and self-driving cars. Starts with a single neuron (which you already understand from Phase 1) and builds up to convolutional networks and PyTorch. CloudSync wants to classify dashboard screenshots and predict server load sequences.</div>
+    </div>
+    <span class="phase-badge badge-planned">Planned · 7 weeks</span>
+  </div>
+  <div class="weeks">
+
+    <div class="week planned">
+      <div class="week-num">W1</div>
+      <div class="week-body">
+        <div class="week-title">⚡ "One Neuron" — The Perceptron</div>
+        <div class="week-game">A single neuron as a weighted sum + activation · direct connection to Phase 1 matrix math · train on XOR problem</div>
+        <div class="week-example">Real example: one neuron that flags high-risk deployments — input: error rate, deploy frequency, team size → output: risk score</div>
+      </div>
+      <span class="week-status ws-planned">Planned</span>
+    </div>
+
+    <div class="week planned">
+      <div class="week-num">W2</div>
+      <div class="week-body">
+        <div class="week-title">🏗️ "Build It Layer by Layer" — Deep Networks</div>
+        <div class="week-game">Add hidden layers one at a time · watch accuracy jump · visualise what each layer learns · vanishing gradient preview</div>
+        <div class="week-example">Real example: predicting user lifetime value — 1 layer barely works, 3 layers captures complex usage patterns</div>
+      </div>
+      <span class="week-status ws-planned">Planned</span>
+    </div>
+
+    <div class="week planned">
+      <div class="week-num">W3</div>
+      <div class="week-body">
+        <div class="week-title">⚡ "Why ReLU Won" — Activation Functions Game</div>
+        <div class="week-game">Sigmoid gradient vanishes in deep nets (watch it happen) · ReLU fixes it · compare training speed · gradient flow visualiser</div>
+        <div class="week-example">Real example: a 10-layer network with sigmoid barely learns. Swap to ReLU — same architecture, 10× faster convergence</div>
+      </div>
+      <span class="week-status ws-planned">Planned</span>
+    </div>
+
+    <div class="week planned">
+      <div class="week-num">W4</div>
+      <div class="week-body">
+        <div class="week-title">↩️ "Follow the Error Backwards" — Backpropagation</div>
+        <div class="week-game">Step through backprop manually on a 3-node net · chain rule as blame assignment · which weight caused the most damage?</div>
+        <div class="week-example">Real example: model predicted 0.9 (very likely to buy), actual was 0 (didn't buy). Trace the error back to see which weights to fix</div>
+      </div>
+      <span class="week-status ws-planned">Planned</span>
+    </div>
+
+    <div class="week planned">
+      <div class="week-num">W5</div>
+      <div class="week-body">
+        <div class="week-title">👁️ "How Does the Model See?" — Convolutional Networks</div>
+        <div class="week-game">Drag filters over an image · edge detection → shape → object builds up · interactive feature map viewer</div>
+        <div class="week-example">Real example: classify CloudSync error screenshots as "crashed", "degraded", or "healthy" from a dashboard screenshot</div>
+      </div>
+      <span class="week-status ws-planned">Planned</span>
+    </div>
+
+    <div class="week planned">
+      <div class="week-num">W6</div>
+      <div class="week-body">
+        <div class="week-title">🔄 "Predict Next Month" — Recurrent Networks / LSTM</div>
+        <div class="week-game">Sequential data · hidden state · LSTM gates (forget / input / output) · compare LSTM vs linear on time-series</div>
+        <div class="week-example">Real example: CloudSync server load follows weekly cycles. LSTM sees the sequence; linear regression treats each month as independent</div>
+      </div>
+      <span class="week-status ws-planned">Planned</span>
+    </div>
+
+    <div class="week planned">
+      <div class="week-num">W7</div>
+      <div class="week-body">
+        <div class="week-title">🔥 PyTorch Capstone — Train a Real Neural Network</div>
+        <div class="week-game">Browser simulator + Python notebook · MNIST handwriting classifier · compare against Phase 2 logistic regression</div>
+        <div class="week-example">Real example: handwriting digit recognition — the classic "hello world" of deep learning, done properly</div>
+      </div>
+      <span class="week-status ws-planned">Planned</span>
+    </div>
+
+  </div>
+</div>
+
+<div class="connector">↓</div>
+
+<!-- ═══════════════════════════════════════════════════════ PHASE 5 -->
+<div class="phase" id="phase5" style="--phase-color:#ff7b72;--phase-bg:#3a0a0a22;">
+  <div class="phase-header">
+    <div class="phase-icon">💬</div>
+    <div class="phase-meta">
+      <div class="phase-title">Phase 5 — NLP & Language Models</div>
+      <div class="phase-subtitle">How computers read text — from counting words to understanding meaning to the transformer architecture that powers GPT. CloudSync gets thousands of support tickets and App Store reviews per day. This phase teaches the model to read them.</div>
+    </div>
+    <span class="phase-badge badge-planned">Planned · 6 weeks</span>
+  </div>
+  <div class="weeks">
+
+    <div class="week planned">
+      <div class="week-num">W1</div>
+      <div class="week-body">
+        <div class="week-title">🔤 "Words as Numbers" — Tokenisation & Bag of Words</div>
+        <div class="week-game">Turn sentences into vectors · one-hot encoding · vocabulary size trade-off · see why "server down" and "outage" become neighbours</div>
+        <div class="week-example">Real example: CloudSync support ticket "DB connection timeout" → a vector of word counts the model can actually learn from</div>
+      </div>
+      <span class="week-status ws-planned">Planned</span>
+    </div>
+
+    <div class="week planned">
+      <div class="week-num">W2</div>
+      <div class="week-body">
+        <div class="week-title">📊 "Which Words Actually Matter?" — TF-IDF Game</div>
+        <div class="week-game">"the" appears 10,000× but means nothing · TF-IDF punishes common words · interactive word weight slider</div>
+        <div class="week-example">Real example: distinguish bug reports from feature requests — "crash" and "error" score high; "the" and "and" score near zero</div>
+      </div>
+      <span class="week-status ws-planned">Planned</span>
+    </div>
+
+    <div class="week planned">
+      <div class="week-num">W3</div>
+      <div class="week-body">
+        <div class="week-title">🌌 "Words in Space" — Word Embeddings</div>
+        <div class="week-game">Drag words around 2D embedding space · king − man + woman ≈ queen · semantic similarity visualiser</div>
+        <div class="week-example">Real example: "AWS" + "outage" ≈ "incident". The model learns meaning from context, not definitions</div>
+      </div>
+      <span class="week-status ws-planned">Planned</span>
+    </div>
+
+    <div class="week planned">
+      <div class="week-num">W4</div>
+      <div class="week-body">
+        <div class="week-title">😡 "Is This Review Angry?" — Sentiment Classifier</div>
+        <div class="week-game">Train on App Store reviews · positive vs negative · confidence score · misclassification explorer</div>
+        <div class="week-example">Real example: CloudSync gets 200 App Store reviews/day. Auto-flag negatives for the support team before they go viral</div>
+      </div>
+      <span class="week-status ws-planned">Planned</span>
+    </div>
+
+    <div class="week planned">
+      <div class="week-num">W5</div>
+      <div class="week-body">
+        <div class="week-title">👁️ "Pay Attention" — Transformer Architecture Game</div>
+        <div class="week-game">Self-attention visualiser · "bank" meaning changes with context · query/key/value intuition · multi-head attention</div>
+        <div class="week-example">Real example: "fix the connection" — connection to DB or to the user? The transformer figures it out from surrounding words</div>
+      </div>
+      <span class="week-status ws-planned">Planned</span>
+    </div>
+
+    <div class="week planned">
+      <div class="week-num">W6</div>
+      <div class="week-body">
+        <div class="week-title">🎛️ Fine-Tuning Capstone — Teach GPT to Answer CloudSync FAQs</div>
+        <div class="week-game">Prompt engineering · few-shot vs fine-tuning · evaluate base model vs fine-tuned on real Q&A pairs</div>
+        <div class="week-example">Real example: base GPT gives generic answers. Fine-tuned on 200 CloudSync FAQ pairs, it answers product questions accurately</div>
+      </div>
+      <span class="week-status ws-planned">Planned</span>
+    </div>
+
+  </div>
+</div>
+
+<div class="connector">↓</div>
+
+<!-- ═══════════════════════════════════════════════════════ PHASE 6 -->
+<div class="phase" id="phase6" style="--phase-color:#d29922;--phase-bg:#2a1f0022;">
+  <div class="phase-header">
+    <div class="phase-icon">🚢</div>
+    <div class="phase-meta">
+      <div class="phase-title">Phase 6 — Production ML Engineering</div>
+      <div class="phase-subtitle">Building models is 20% of the job. Getting them to production reliably is the other 80%. This is where your engineering background becomes a superpower — pipelines, monitoring, deployment, and the full MLOps cycle. CloudSync is ready to ship its churn predictor to 50,000 users.</div>
+    </div>
+    <span class="phase-badge badge-planned">Planned · 5 weeks</span>
+  </div>
+  <div class="weeks">
+
+    <div class="week planned">
+      <div class="week-num">W1</div>
+      <div class="week-body">
+        <div class="week-title">🔧 "Turn Logs Into Features" — Feature Engineering Game</div>
+        <div class="week-game">Raw event logs → session length, click velocity, feature depth score · before/after model accuracy comparison</div>
+        <div class="week-example">Real example: raw CloudSync events "user.login", "export.clicked" → engineered features that 3× churn model accuracy</div>
+      </div>
+      <span class="week-status ws-planned">Planned</span>
+    </div>
+
+    <div class="week planned">
+      <div class="week-num">W2</div>
+      <div class="week-body">
+        <div class="week-title">⚖️ "1% Fraud, 99% Normal" — Imbalanced Data Game</div>
+        <div class="week-game">A model that predicts "no fraud" every time is 99% accurate but useless · SMOTE · oversampling · undersampling · cost-sensitive learning</div>
+        <div class="week-example">Real example: CloudSync payment fraud is 0.3% of transactions. How do you train a model that actually catches it?</div>
+      </div>
+      <span class="week-status ws-planned">Planned</span>
+    </div>
+
+    <div class="week planned">
+      <div class="week-num">W3</div>
+      <div class="week-body">
+        <div class="week-title">📉 "Your Model is Getting Dumber" — Drift Detection</div>
+        <div class="week-game">Accuracy timeline · feature distribution shift visualiser · alerts · retrain trigger game</div>
+        <div class="week-example">Real example: churn model was 88% in January, 61% in June — user behaviour changed after a pricing update. Detect and fix it</div>
+      </div>
+      <span class="week-status ws-planned">Planned</span>
+    </div>
+
+    <div class="week planned">
+      <div class="week-num">W4</div>
+      <div class="week-body">
+        <div class="week-title">🌐 "Wrap It as an API" — Model Deployment</div>
+        <div class="week-game">FastAPI endpoint · send test requests · latency vs accuracy trade-off · A/B test two model versions</div>
+        <div class="week-example">Real example: package the Phase 3 churn model as a REST API. CloudSync's backend calls it on every user login</div>
+      </div>
+      <span class="week-status ws-planned">Planned</span>
+    </div>
+
+    <div class="week planned">
+      <div class="week-num">W5</div>
+      <div class="week-body">
+        <div class="week-title">🏁 Final Capstone — CloudSync Churn Predictor End-to-End</div>
+        <div class="week-game">Raw data → feature engineering → model selection → hyperparameter tuning → deployment → monitoring dashboard</div>
+        <div class="week-example">Real example: the full MLOps cycle. Ship a churn model that runs on CloudSync's 50,000 users and pages you when it degrades</div>
+      </div>
+      <span class="week-status ws-planned">Planned</span>
+    </div>
+
+  </div>
+</div>
+
+</main>
+
+<footer>ML/DS Learning Arena · 6 Phases · 40 Weeks · CloudSync Story · <a href="index.html" style="color:#58a6ff;">← Back to Arena</a></footer>
+
+</body>
+</html>
