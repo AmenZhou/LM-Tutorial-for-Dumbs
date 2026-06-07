@@ -149,6 +149,13 @@
   </div>
 
   <div class="card">
+    <h3>💻 OLS in Python</h3>
+    <div class="info-box info-blue" style="margin-bottom:12px;">The closed-form formula — computes the exact best-fit slope and intercept in one pass, no iteration needed.</div>
+    <pre id="code-what" class="result-box" style="white-space:pre;overflow-x:auto;font-size:0.82rem;line-height:1.8;cursor:pointer;" onclick="copyCode('code-what','btn-what')" title="Click to copy"></pre>
+    <button id="btn-what" class="secondary" onclick="copyCode('code-what','btn-what')" style="margin-top:8px;">📋 Copy</button>
+  </div>
+
+  <div class="card">
     <h3>When to Use It</h3>
     <table>
       <thead><tr><th>✅ Good for</th><th>❌ Not suitable for</th></tr></thead>
@@ -210,6 +217,13 @@
       The goal is to get it as low as possible — that's what gradient descent does automatically.
     </p>
   </div>
+
+  <div class="card">
+    <h3>💻 MSE in Python</h3>
+    <div class="info-box info-orange" style="margin-bottom:12px;">This is the exact function the game uses to score your line. Change <code style="color:#ff9944;">your_slope</code> and <code style="color:#ff9944;">your_intercept</code> to see how any guess scores.</div>
+    <pre id="code-game" class="result-box" style="white-space:pre;overflow-x:auto;font-size:0.82rem;line-height:1.8;cursor:pointer;" onclick="copyCode('code-game','btn-game')" title="Click to copy"></pre>
+    <button id="btn-game" class="secondary" onclick="copyCode('code-game','btn-game')" style="margin-top:8px;">📋 Copy</button>
+  </div>
 </div>
 
 <!-- ===== TAB 3: AUTO ===== -->
@@ -251,6 +265,13 @@
       This is identical to the ball simulator from Phase 1 — just running for two weights (slope + intercept) simultaneously.
       Try the learning rate slider: set it high and watch it overshoot, low and watch it crawl.
     </p>
+  </div>
+
+  <div class="card">
+    <h3>💻 Gradient Descent in Python</h3>
+    <div class="info-box info-orange" style="margin-bottom:12px;">Runnable version of the animation above — same starting point, same update rule. Try changing <code style="color:#ff9944;">lr</code> to see overshooting vs crawling.</div>
+    <pre id="code-auto" class="result-box" style="white-space:pre;overflow-x:auto;font-size:0.82rem;line-height:1.8;cursor:pointer;" onclick="copyCode('code-auto','btn-auto')" title="Click to copy"></pre>
+    <button id="btn-auto" class="secondary" onclick="copyCode('code-auto','btn-auto')" style="margin-top:8px;">📋 Copy</button>
   </div>
 </div>
 
@@ -304,6 +325,13 @@
         <table id="model-table"></table>
       </div>
     </div>
+  </div>
+
+  <div class="card">
+    <h3>💻 Evaluate with sklearn</h3>
+    <div class="info-box info-green" style="margin-bottom:12px;">The production path: <code style="color:#3fb950;">LinearRegression().fit()</code> + R² and MSE scores — same numbers shown in the chart above.</div>
+    <pre id="code-eval" class="result-box" style="white-space:pre;overflow-x:auto;font-size:0.82rem;line-height:1.8;cursor:pointer;" onclick="copyCode('code-eval','btn-eval')" title="Click to copy"></pre>
+    <button id="btn-eval" class="secondary" onclick="copyCode('code-eval','btn-eval')" style="margin-top:8px;">📋 Copy</button>
   </div>
 </div>
 
@@ -658,6 +686,101 @@ function qAns(qi,oi) {
     },500);
   }
 }
+
+// ============ INLINE CODE SNIPPETS ============
+function copyCode(preId, btnId) {
+  const text = document.getElementById(preId).textContent;
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn = document.getElementById(btnId);
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    btn.style.color = '#3fb950';
+    setTimeout(()=>{ btn.textContent = orig; btn.style.color = ''; }, 1800);
+  });
+}
+
+(function populateCode() {
+  document.getElementById('code-what').textContent =
+`import numpy as np
+
+servers = np.array([1,2,2,3,3,4,5,5,6,6,7,7,8,8,9,9,10,10,4,6], dtype=float)
+bills   = np.array([420,680,590,820,910,1050,1280,1190,1540,1620,
+                    1880,1750,2100,2050,2300,2390,2600,2480,980,1700], dtype=float)
+
+x_mean = servers.mean()
+y_mean = bills.mean()
+
+# OLS closed-form: slope = Σ(x-x̅)(y-y̅) / Σ(x-x̅)²
+slope     = np.sum((servers - x_mean) * (bills - y_mean)) / np.sum((servers - x_mean)**2)
+intercept = y_mean - slope * x_mean
+
+print(f"slope     = {slope:.2f}")          # 246.26 — each extra server costs ~$246/month
+print(f"intercept = {intercept:.2f}")      # 153.54 — base cost with 0 servers
+print(f"7 servers = {slope*7+intercept:.0f}")  # 1878`;
+
+  document.getElementById('code-game').textContent =
+`import numpy as np
+
+servers = np.array([1,2,2,3,3,4,5,5,6,6,7,7,8,8,9,9,10,10,4,6], dtype=float)
+bills   = np.array([420,680,590,820,910,1050,1280,1190,1540,1620,
+                    1880,1750,2100,2050,2300,2390,2600,2480,980,1700], dtype=float)
+
+def mse(slope, intercept):
+    predictions = slope * servers + intercept
+    return np.mean((predictions - bills)**2)
+
+# Change these to match your slider values
+your_slope, your_intercept = 200, 300
+print(f"Your MSE: {mse(your_slope, your_intercept):.0f}")
+
+# OLS gives the lowest achievable MSE for this dataset
+x_mean, y_mean = servers.mean(), bills.mean()
+best_slope     = np.sum((servers-x_mean)*(bills-y_mean)) / np.sum((servers-x_mean)**2)
+best_intercept = y_mean - best_slope * x_mean
+print(f"Best MSE: {mse(best_slope, best_intercept):.0f}")`;
+
+  document.getElementById('code-auto').textContent =
+`import numpy as np
+
+servers = np.array([1,2,2,3,3,4,5,5,6,6,7,7,8,8,9,9,10,10,4,6], dtype=float)
+bills   = np.array([420,680,590,820,910,1050,1280,1190,1540,1620,
+                    1880,1750,2100,2050,2300,2390,2600,2480,980,1700], dtype=float)
+
+slope, intercept = 50.0, 100.0  # bad starting guess — same as the animation
+lr = 0.0001                      # try 0.001 to see overshooting
+
+for epoch in range(5000):
+    errors         = slope * servers + intercept - bills
+    grad_slope     = np.mean(errors * servers)  # dMSE/d_slope
+    grad_intercept = np.mean(errors)            # dMSE/d_intercept
+    slope     -= lr * grad_slope
+    intercept -= lr * grad_intercept
+    if epoch % 500 == 0:
+        print(f"Epoch {epoch:4d}  MSE={np.mean(errors**2):.0f}")
+    if np.mean(errors**2) < 1e4:
+        print(f"Converged at epoch {epoch}  slope={slope:.2f}  intercept={intercept:.2f}")
+        break`;
+
+  document.getElementById('code-eval').textContent =
+`import numpy as np
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+
+servers = np.array([1,2,2,3,3,4,5,5,6,6,7,7,8,8,9,9,10,10,4,6]).reshape(-1, 1)
+bills   = np.array([420,680,590,820,910,1050,1280,1190,1540,1620,
+                    1880,1750,2100,2050,2300,2390,2600,2480,980,1700], dtype=float)
+
+model       = LinearRegression().fit(servers, bills)
+predictions = model.predict(servers)
+naive       = np.full_like(bills, bills.mean())
+
+print(f"slope     = {model.coef_[0]:.2f}")
+print(f"intercept = {model.intercept_:.2f}")
+print(f"MSE naive = {mean_squared_error(bills, naive):.0f}")
+print(f"MSE model = {mean_squared_error(bills, predictions):.0f}")
+print(f"R²        = {r2_score(bills, predictions):.4f}")
+# R2 = 0.9880 -> the model explains 98.8% of why bills vary`;
+})();
 
 // Init
 setTimeout(()=>{ drawGameCanvas(); },100);
